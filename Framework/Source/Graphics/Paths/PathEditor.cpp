@@ -69,10 +69,18 @@ namespace Falcor
 
             if (pGui->addFloat3Var("Position", p, -FLT_MAX, FLT_MAX))
             {
+                if(mPreserveRotation)
+                {
+                    // Calculate using pre-edited position
+                    glm::vec3 toTarget = keyframe.target - keyframe.position;
+                    mpPath->setFrameTarget(mActiveFrame, p + toTarget);
+                }
+                else 
+                {
+                    rotationChanged = true;
+                }
+
                 mpPath->setFramePosition(mActiveFrame, p);
-
-                rotationChanged |= (mPreserveRotation == false);
-
                 changed = true;
             }
 
