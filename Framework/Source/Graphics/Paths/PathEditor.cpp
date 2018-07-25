@@ -31,6 +31,7 @@
 #include "Graphics/Camera/Camera.h"
 #include "Utils/StringUtils.h"
 #include <cstring>
+#include "Utils/Math/FalcorMath.h"
 
 namespace Falcor
 {
@@ -60,21 +61,48 @@ namespace Falcor
 
             bool changed = false;
 
-            if (pGui->addFloat3Var("Keyframe Position", p, -FLT_MAX, FLT_MAX))
+            // Whether rotation was changed by modifying position/target/up vectors
+            bool rotationChanged = false;
+
+            pGui->addCheckBox("Preserve Rotation", mPreserveRotation);
+            pGui->addTooltip("If checked, the target position will also be updated when position is changed.", true);
+
+            if (pGui->addFloat3Var("Position", p, -FLT_MAX, FLT_MAX))
             {
                 mpPath->setFramePosition(mActiveFrame, p);
+
+                rotationChanged |= (mPreserveRotation == false);
+
                 changed = true;
             }
 
-            if (pGui->addFloat3Var("Keyframe Target", t, -FLT_MAX, FLT_MAX))
+            if (pGui->addFloat3Var("Target", t, -FLT_MAX, FLT_MAX))
             {
                 mpPath->setFrameTarget(mActiveFrame, t);
+                rotationChanged = true;
                 changed = true;
             }
 
-            if (pGui->addFloat3Var("Keyframe Up", u, -FLT_MAX, FLT_MAX))
+            if (pGui->addFloat3Var("Up", u, -FLT_MAX, FLT_MAX))
             {
                 mpPath->setFrameUp(mActiveFrame, u);
+                rotationChanged = true;
+                changed = true;
+            }
+
+            if(rotationChanged)
+            {
+                updateActiveFrameRotationAngles();
+            }
+
+            // Additional UI for editing rotation by yaw-pitch-roll, can be useful for object paths
+            if (pGui->addFloat3Var("Rotation", mActiveFrameRot, -360.0f, 360.0f, 0.1f))
+            {
+                glm::vec3 r = radians(mActiveFrameRot);
+                glm::mat3 rotMtx = glm::yawPitchRoll(r[0], r[1], r[2]);
+                mpPath->setFrameUp(mActiveFrame, rotMtx[1]);
+                mpPath->setFrameTarget(mActiveFrame, p + rotMtx[2]);
+
                 changed = true;
             }
 
@@ -83,6 +111,14 @@ namespace Falcor
                 mFrameChangedCB();
             }
         }
+    }
+
+    void PathEditor::updateActiveFrameRotationAngles()
+    {
+        const auto& keyframe = mpPath->getKeyFrame(mActiveFrame);
+        glm::mat4 rot = createMatrixFromLookAt(keyframe.position, keyframe.target, keyframe.up);
+        glm::extractEulerAngleXYZ(rot, mActiveFrameRot[1], mActiveFrameRot[0], mActiveFrameRot[2]);
+        mActiveFrameRot = degrees(mActiveFrameRot);
     }
 
     void PathEditor::editActiveFrameID(Gui* pGui)
@@ -100,6 +136,7 @@ namespace Falcor
     {
         mActiveFrame = id;
         mFrameTime = mpPath->getKeyFrame(mActiveFrame).time;
+        updateActiveFrameRotationAngles();
         mFrameChangedCB();
     }
     

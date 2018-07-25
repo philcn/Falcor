@@ -819,6 +819,9 @@ namespace Falcor
                 pPath->setFramePosition(activeFrame, pInstance->getTranslation());
                 pPath->setFrameTarget(activeFrame, pInstance->getTarget());
                 pPath->setFrameUp(activeFrame, pInstance->getUpVector());
+
+                // Update the editor's rotation angle data for the UI
+                mpPathEditor->setActiveFrame(activeFrame);
             }
             break;
         }

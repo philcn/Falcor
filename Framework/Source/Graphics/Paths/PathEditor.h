@@ -82,9 +82,13 @@ namespace Falcor
 
         void updateFrameTime(Gui* pGui);
         void moveToCamera(Gui* pGui);
+        void updateActiveFrameRotationAngles();
 
         ObjectPath::SharedPtr mpPath;
         Camera::SharedPtr mpCamera;
+
+        bool mPreserveRotation = false;
+        glm::vec3 mActiveFrameRot; // Yaw-Pitch-Roll
 
         PathEditorCallback mEditCompleteCB;
         PathEditorCallback mFrameChangedCB;
