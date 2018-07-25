@@ -379,7 +379,7 @@ namespace Falcor
                 pNewLight->setName(name);
                 mLightNames.insert(name);
 
-                mpEditorScene->addModelInstance(mpLightModel, name, glm::vec3(), glm::vec3(), glm::vec3(kLightModelScale));
+                mpEditorScene->addModelInstance(mpLightModel, name, glm::vec3(), glm::vec3(), glm::vec3(mEditorObjectGlobalScale * kLightModelScale));
                 updateEditorModelIDs();
                 rebuildLightIDMap();
 
@@ -560,7 +560,7 @@ namespace Falcor
             for (uint32_t i = 0; i < mpScene->getCameraCount(); i++)
             {
                 const auto& pCamera = mpScene->getCamera(i);
-                mpEditorScene->addModelInstance(mpCameraModel, "Camera " + std::to_string(i), glm::vec3(), glm::vec3(), glm::vec3(kCameraModelScale));
+                mpEditorScene->addModelInstance(mpCameraModel, "Camera " + std::to_string(i), glm::vec3(), glm::vec3(), glm::vec3(mEditorObjectGlobalScale * kCameraModelScale));
 
                 // Track camera names
                 mCameraNames.emplace(pCamera->getName());
@@ -579,7 +579,7 @@ namespace Falcor
             const auto& pLight = mpScene->getLight(i);
             if (pLight->getType() == LightPoint)
             {
-                mpEditorScene->addModelInstance(mpLightModel, "Point Light " + std::to_string(pointLightID++), glm::vec3(), glm::vec3(), glm::vec3(kLightModelScale));
+                mpEditorScene->addModelInstance(mpLightModel, "Point Light " + std::to_string(pointLightID++), glm::vec3(), glm::vec3(), glm::vec3(mEditorObjectGlobalScale * kLightModelScale));
             }
 
             // Track light names
@@ -687,6 +687,7 @@ namespace Falcor
                 const auto& pLight = mpScene->getLight(mLightIDEditorToScene[i]);
                 auto& pModelInstance = mpEditorScene->getModelInstance(mEditorLightModelID, i);
                 pModelInstance->setTranslation(pLight->getData().posW, true);
+                pModelInstance->setScaling(glm::vec3(mEditorObjectGlobalScale * kLightModelScale));
             }
         }
 
@@ -701,11 +702,11 @@ namespace Falcor
                 // Make keyframe model bigger if selected
                 if (mpPathEditor->getActiveFrame() == i && mSelectedObjectType == ObjectType::Keyframe)
                 {
-                    pInstance->setScaling(glm::vec3(kKeyframeModelScale * 2.0f));
+                    pInstance->setScaling(glm::vec3(mEditorObjectGlobalScale * kKeyframeModelScale * 2.0f));
                 }
                 else
                 {
-                    pInstance->setScaling(glm::vec3(kKeyframeModelScale));
+                    pInstance->setScaling(glm::vec3(mEditorObjectGlobalScale * kKeyframeModelScale));
                 }
             }
         }
@@ -719,6 +720,8 @@ namespace Falcor
         pInstance->setTranslation(pCamera->getPosition(), false);
         pInstance->setTarget(pCamera->getTarget());
         pInstance->setUpVector(pCamera->getUpVector());
+
+        pInstance->setScaling(glm::vec3(mEditorObjectGlobalScale * kCameraModelScale));
     }
 
     void SceneEditor::renderPath(RenderContext* pContext)
@@ -1104,6 +1107,14 @@ namespace Falcor
             saveScene();
         }
 
+        if (pGui->addFloatVar("Editor Object Scale", mEditorObjectGlobalScale, 0.1f, FLT_MAX, 0.1f))
+        {
+            updateEditorObjectTransforms();
+        }
+
+        pGui->addSeparator();
+
+
         // Gizmo Selection
         int32_t selectedGizmo = (int32_t)mActiveGizmoType;
         pGui->addRadioButtons(kGizmoSelectionButtons, selectedGizmo);
@@ -1436,7 +1447,7 @@ namespace Falcor
                 mpScene->setActiveCamera(camIndex);
 
                 // Update editor scene
-                mpEditorScene->addModelInstance(mpCameraModel, pCamera->getName(), glm::vec3(), glm::vec3(), glm::vec3(kCameraModelScale));
+                mpEditorScene->addModelInstance(mpCameraModel, pCamera->getName(), glm::vec3(), glm::vec3(), glm::vec3(mEditorObjectGlobalScale * kCameraModelScale));
                 updateEditorModelIDs();
                 mCameraNames.emplace(pCamera->getName());
 
@@ -1556,7 +1567,7 @@ namespace Falcor
             for (uint32_t i = 0; i < pPath->getKeyFrameCount(); i++)
             {
                 const auto& frame = pPath->getKeyFrame(i);
-                auto pNewInstance = Scene::ModelInstance::create(mpKeyframeModel, frame.position, frame.target, frame.up, glm::vec3(kKeyframeModelScale), "Frame " + std::to_string(i));
+                auto pNewInstance = Scene::ModelInstance::create(mpKeyframeModel, frame.position, frame.target, frame.up, glm::vec3(mEditorObjectGlobalScale * kKeyframeModelScale), "Frame " + std::to_string(i));
                 mpEditorScene->addModelInstance(pNewInstance);
             }
 

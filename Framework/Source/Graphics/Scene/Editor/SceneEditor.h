@@ -172,6 +172,7 @@ namespace Falcor
         // Editor Objects
         //
 
+        float mEditorObjectGlobalScale = 1.0f;
         static const float kCameraModelScale;
         static const float kLightModelScale;
         static const float kKeyframeModelScale;
