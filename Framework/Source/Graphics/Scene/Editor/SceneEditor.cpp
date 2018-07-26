@@ -746,7 +746,7 @@ namespace Falcor
         pContext->setGraphicsState(mpPathGraphicsState);
         pContext->setGraphicsVars(mpDebugDrawProgramVars);
 
-        if(mpPathEditor != nullptr)
+        if(mpPathEditor != nullptr && mpPathEditor->getPath()->getKeyFrameCount() > 0)
         {
             const ObjectPath::Frame& frame = mpPathEditor->getPath()->getKeyFrame(mpPathEditor->getActiveFrame());
             mpDebugDrawer->addLine(frame.position, frame.target);
