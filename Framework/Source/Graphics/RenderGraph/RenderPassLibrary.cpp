@@ -103,7 +103,7 @@ namespace Falcor
         }
         else
         {
-            mPasses[className] = ExtendeDesc(className, desc, func, module);
+            mPasses[className] = ExtendedDesc(className, desc, func, module);
         }
     }
 
