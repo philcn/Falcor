@@ -19,48 +19,6 @@ import WriteTestResultsToHTML as write_test_results_to_html
 class TestsSetError(Exception):
     pass
 
-def get_executable_directory(configuration, test_set, runAsCollection):
-    if runAsCollection:
-        exe_dir = os.path.join(test_set, 'Bin')
-    else:
-        exe_dir = 'Bin'
-        
-    if os.name == 'nt':
-        exe_dir = os.path.join(exe_dir, 'x64')
-        if configuration.lower() == 'released3d12' or configuration.lower() == 'releasevk' :
-            config = 'Release'
-        else:
-            config = 'Debug'
-        return os.path.join(exe_dir, config)
-    else:
-        return exe_dir
-
-def build_solution(cloned_dir, relative_solution_filepath, configuration, rebuild):
-    if os.name == 'nt':
-        windows_build_script = "BuildSolution.bat"
-        try:
-            # Build the Batch Args.
-            buildType = "build"
-            if rebuild:
-                buildType = "rebuild"
-            batch_args = [windows_build_script, buildType, relative_solution_filepath, configuration.lower()]
-
-            # Build Solution.
-            if subprocess.call(batch_args) == 0:
-                return 0
-            else:
-                raise TestsSetError("Error building solution : " + relative_solution_filepath + " with configuration : " + configuration.lower())
-
-        except subprocess.CalledProcessError as subprocess_error:
-            raise TestsSetError("Error building solution : " + relative_solution_filepath + " with configuration : " + configuration.lower())
-    else:
-        prevDir = os.getcwd()
-        #Call Makefile
-        os.chdir(cloned_dir)
-        subprocess.call(['make', 'PreBuild', '-j8'])
-        subprocess.call(['make', 'All', '-j8'])
-        os.chdir(prevDir)
-
 def run_test_run(executable_filepath, current_arguments, output_file_base_name, output_directory):
     try:
         # Start the process and record the time.
@@ -170,7 +128,7 @@ def run_tests_set(main_directory, rebuild, json_filepath, results_directory, ref
 
                 # Try running the test.
                 try:
-                    executable_file = os.path.join(executable_directory, current_tests_group['Project Name'])                    
+                    executable_file = os.path.join(executable_directory, current_tests_group['Project Name']) 
                     if os.name == 'nt':
                         executable_file += '.exe'
                     current_test_run_result = run_test_run(executable_file, current_test_args, current_tests_group_name + str(index), current_results_directory)
@@ -304,8 +262,13 @@ def analyze_screen_captures(tolerance, result_json_data, current_test_result_dir
                 result_str = image_compare_result[:image_compare_result.find(' ')]
                 result['Compare Result'] = result_str
                 result['Test Passed'] = float(result_str) <= tolerance
+  
+                if result['Test Passed'] == False:
+                    print('[FAILED] Comparision above tolerance. Difference was ' + result_str + ' on image ' + test_result_image_filename)
+                
             # Error
             else:
+                print('[FAILED] No output file produced. ')
                 result['Compare Result'] = "Error"
                 result['Test Passed'] = False
 
@@ -338,7 +301,8 @@ def main():
     
     #Which machine name to use for reference comparsion 
     parser.add_argument('-mn', '--machine_name', action='store', help='Which machine name use as reference')
-
+    
+    
     # Parse the Arguments.
     args = parser.parse_args()
 

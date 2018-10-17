@@ -32,6 +32,12 @@ size_t RenderGraphViewer::DebugWindow::index = 0;
 const std::string gkDefaultScene = "alphatest/alpha_test.fscene";
 const char* kEditorExecutableName = "RenderGraphEditor";
 
+const char* kSceneSwitch = "scene";
+const char* kImageSwitch = "image";
+const char* kGraphFileSwitch = "graphFile";
+const char* kGraphNameSwitch = "graphname";
+const char* kEditorSwitch = "editor";
+
 void RenderGraphViewer::onShutdown(SampleCallbacks* pSample)
 {
     resetEditor();
@@ -41,19 +47,8 @@ void RenderGraphViewer::onShutdown(SampleCallbacks* pSample)
 void RenderGraphViewer::onLoad(SampleCallbacks* pSample, const RenderContext::SharedPtr& pRenderContext)
 {
     // if editor opened from running render graph, get the name of the file to read
-    std::vector<ArgList::Arg> commandArgs = pSample->getArgList().getValues("tempFile");
-   
-    if (commandArgs.size())
-    {
-        std::string filename = commandArgs.front().asString();
-        if (filename.size())
-        {
-            addGraphsFromFile(filename, pSample);
-            monitorFileUpdates(filename, std::bind(&RenderGraphViewer::editorFileChangeCB, this));
-            mEditorProcess = kInvalidProcessId;
-        }
-        else msgBox("No path to temporary file provided");
-    }
+    mDefaultSceneName = gkDefaultScene;
+    parseArguments(pSample, pSample->getArgList());
 
     const auto& pFbo = pSample->getCurrentFbo();
     uint32_t w = pFbo->getWidth();
@@ -61,6 +56,48 @@ void RenderGraphViewer::onLoad(SampleCallbacks* pSample, const RenderContext::Sh
     w = (uint32_t)(w * 0.25f);
     h = (uint32_t)(h * 0.6f);
     pSample->setDefaultGuiSize(w, h);
+}
+
+void RenderGraphViewer::parseArguments(SampleCallbacks* pSample, const ArgList& argList)
+{
+    if (argList.argExists(kSceneSwitch))
+    {
+        std::string filename = argList[kSceneSwitch].asString();
+        if (filename.size()) { mDefaultSceneName = filename; }
+        else msgBox("No path to default scene provided.");
+    }
+    if (argList.argExists(kImageSwitch))
+    {
+        std::string filename = argList[kImageSwitch].asString();
+        if (filename.size()) { mDefaultImageName = filename; }
+        else msgBox("No path to default image provided.");
+    }
+    if (argList.argExists(kGraphFileSwitch))
+    {
+        std::string filename = argList[kGraphFileSwitch].asString();
+        if (filename.size())
+        {
+            if (argList.argExists(kGraphNameSwitch))
+            {
+                std::string graphName = argList[kGraphNameSwitch].asString();
+                if (graphName.size())
+                {
+                    auto pGraph = RenderGraphImporter::import(graphName, filename);
+                    mGraphs.push_back({});
+                    initGraph(pGraph, graphName, filename, pSample, mGraphs.back());
+                }
+            }
+            else { addGraphsFromFile(filename, pSample); }
+        }
+        else { msgBox("No file path provided for input graph file"); }
+
+        if (argList.argExists(kEditorSwitch))
+        {
+            mEditorTempFile = filename;
+            monitorFileUpdates(filename, std::bind(&RenderGraphViewer::editorFileChangeCB, this));
+            mEditorProcess = kInvalidProcessId;
+        }
+    }
 }
 
 bool isInVector(const std::vector<std::string>& strVec, const std::string& str)
@@ -95,7 +132,7 @@ void RenderGraphViewer::renderOutputUI(Gui* pGui, const Gui::DropdownList& dropd
         }
     }
 
-    // This can happen when `showAllOutputs` changes to false, and the chosen output is not an original output. We will force an ouptut change
+    // This can happen when `showAllOutputs` changes to false, and the chosen output is not an original output. We will force an output change
     bool forceOutputChange = activeOut == -1;
     if (forceOutputChange) activeOut = 0;
 
@@ -221,8 +258,9 @@ void RenderGraphViewer::openEditor()
     monitorFileUpdates(mEditorTempFile, std::bind(&RenderGraphViewer::editorFileChangeCB, this));
 
     // Run the process
-    std::string commandLine = std::string("-tempFile ") + mEditorTempFile + std::string(" -graphname ") + mGraphs[mActiveGraph].name;
-    mEditorProcess = executeProcess(kEditorExecutableName, commandLine);
+    std::string commandLineArgs = '-' + std::string(kEditorSwitch) + " -" + std::string(kGraphFileSwitch);
+    commandLineArgs += ' ' + mEditorTempFile + " -" + std::string(kGraphNameSwitch) + ' ' + mGraphs[mActiveGraph].name;
+    mEditorProcess = executeProcess(kEditorExecutableName, commandLineArgs);
 
     // Mark the output if it's required
     if (unmarkOut) mGraphs[mActiveGraph].pGraph->markOutput(mGraphs[mActiveGraph].mainOutput);
@@ -260,13 +298,16 @@ void RenderGraphViewer::initGraph(const RenderGraph::SharedPtr& pGraph, const st
 {
     if (pGraph->getName().empty()) pGraph->setName(name);
 
+    // Set input image if it exists
+    if(mDefaultImageName.size())    (*pGraph->getPassesDictionary())[kImageSwitch] = mDefaultImageName;
+
     data.name = name;
     data.filename = filename;
     data.fileModifiedTime = getFileModifiedTime(filename);
     data.pGraph = pGraph;
     if(data.pGraph->getScene() == nullptr)
     {
-        if (!mpDefaultScene) loadSceneFromFile(gkDefaultScene, pCallbacks);
+        if (!mpDefaultScene) loadSceneFromFile(mDefaultSceneName, pCallbacks);
         data.pGraph->setScene(mpDefaultScene);
     }
     if (data.pGraph->getOutputCount() != 0) data.mainOutput = data.pGraph->getOutputName(0);
@@ -285,7 +326,7 @@ void RenderGraphViewer::addGraphsFromFile(const std::string& filename, SampleCal
 {
     const auto& pTargetFbo = pCallbacks->getCurrentFbo().get();
     auto graphs = RenderGraphImporter::importAllGraphs(filename, pTargetFbo);
-
+    
     for (auto& newG : graphs)
     {
         bool found = false;
@@ -363,7 +404,7 @@ void RenderGraphViewer::onFrameRender(SampleCallbacks* pSample, const RenderCont
     if (mGraphs.size())
     {
         auto& pGraph = mGraphs[mActiveGraph].pGraph;
-        pGraph->getScene()->update(pSample->getCurrentTime(), &mCamController);
+        if (pGraph->getScene()) pGraph->getScene()->update(pSample->getCurrentTime(), &mCamController);
 
         pGraph->execute(pRenderContext.get());
         if(mGraphs[mActiveGraph].mainOutput.size())
@@ -471,6 +512,10 @@ int main(int argc, char** argv)
 #ifdef FALCOR_DXR
     RtSample::run(config, pRenderer);
 #else
+#ifndef _WIN32
+    config.argc = argc;
+    config.argv = argv;
+#endif
     Sample::run(config, pRenderer);
 #endif
     return 0;
