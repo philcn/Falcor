@@ -750,6 +750,9 @@ namespace Falcor
         {
             const ObjectPath::Frame& frame = mpPathEditor->getPath()->getKeyFrame(mpPathEditor->getActiveFrame());
             mpDebugDrawer->addLine(frame.position, frame.target);
+
+            const float kPointSize = 0.1f;
+            mpDebugDrawer->addPoint(frame.target, kPointSize * mEditorObjectGlobalScale);
         }
 
         mpDebugDrawer->render(pContext, mpEditorScene->getActiveCamera().get());
@@ -1113,13 +1116,12 @@ namespace Falcor
             saveScene();
         }
 
+        pGui->addSeparator();
+
         if (pGui->addFloatVar("Editor Object Scale", mEditorObjectGlobalScale, 0.1f, FLT_MAX, 0.1f))
         {
             updateEditorObjectTransforms();
         }
-
-        pGui->addSeparator();
-
 
         // Gizmo Selection
         int32_t selectedGizmo = (int32_t)mActiveGizmoType;

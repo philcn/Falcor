@@ -56,6 +56,10 @@ namespace Falcor
         */
         void setColor(const glm::vec3& color) { mCurrentColor = color; }
 
+        /** Adds a point visualized by a cross
+        */
+        void addPoint(const vec3& pos, float radius);
+
         /** Adds a line segment
         */
         void addLine(const glm::vec3& a, const glm::vec3& b);

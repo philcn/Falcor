@@ -59,13 +59,13 @@ namespace Falcor
             vec3 t = keyframe.target;
             vec3 u = keyframe.up;
 
-            bool changed = false;
+            bool dirty = false;
 
-            // Whether rotation was changed by modifying position/target/up vectors
+            // Whether rotation specifically was changed
             bool rotationChanged = false;
 
             pGui->addCheckBox("Preserve Rotation", mPreserveRotation);
-            pGui->addTooltip("If checked, the target position will also be updated when position is changed.", true);
+            pGui->addTooltip("If checked, the target will also be updated when position is changed.", true);
 
             if (pGui->addFloat3Var("Position", p, -FLT_MAX, FLT_MAX))
             {
@@ -81,21 +81,21 @@ namespace Falcor
                 }
 
                 mpPath->setFramePosition(mActiveFrame, p);
-                changed = true;
+                dirty = true;
             }
 
             if (pGui->addFloat3Var("Target", t, -FLT_MAX, FLT_MAX))
             {
                 mpPath->setFrameTarget(mActiveFrame, t);
                 rotationChanged = true;
-                changed = true;
+                dirty = true;
             }
 
             if (pGui->addFloat3Var("Up", u, -FLT_MAX, FLT_MAX))
             {
                 mpPath->setFrameUp(mActiveFrame, u);
                 rotationChanged = true;
-                changed = true;
+                dirty = true;
             }
 
             if(rotationChanged)
@@ -103,7 +103,7 @@ namespace Falcor
                 updateActiveFrameRotationAngles();
             }
 
-            // Additional UI for editing rotation by yaw-pitch-roll, can be useful for object paths
+            // Additional UI for editing rotation by yaw-pitch-roll, can be useful for non-camera paths
             if (pGui->addFloat3Var("Rotation", mActiveFrameRot, -360.0f, 360.0f, 0.1f))
             {
                 glm::vec3 r = radians(mActiveFrameRot);
@@ -111,10 +111,10 @@ namespace Falcor
                 mpPath->setFrameUp(mActiveFrame, rotMtx[1]);
                 mpPath->setFrameTarget(mActiveFrame, p + rotMtx[2]);
 
-                changed = true;
+                dirty = true;
             }
 
-            if (changed)
+            if (dirty)
             {
                 mFrameChangedCB();
             }

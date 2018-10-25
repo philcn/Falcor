@@ -39,6 +39,13 @@ namespace Falcor
         return SharedPtr(new DebugDrawer(maxVertices));
     }
 
+    void DebugDrawer::addPoint(const vec3& pos, float radius)
+    {
+        addLine(pos - vec3(radius, 0, 0), pos + vec3(radius, 0, 0));
+        addLine(pos - vec3(0, radius, 0), pos + vec3(0, radius, 0));
+        addLine(pos - vec3(0, 0, radius), pos + vec3(0, 0, radius));
+    }
+
     void DebugDrawer::addLine(const glm::vec3& a, const glm::vec3& b)
     {
         if (mVertexData.capacity() - mVertexData.size() >= 2)

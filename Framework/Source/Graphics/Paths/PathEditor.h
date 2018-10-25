@@ -88,6 +88,9 @@ namespace Falcor
         Camera::SharedPtr mpCamera;
 
         bool mPreserveRotation = false;
+
+        // Cache euler angle rotation representation of active frame orientation for stability
+        // like we do in scene editor for scene objects
         glm::vec3 mActiveFrameRot; // Yaw-Pitch-Roll
 
         PathEditorCallback mEditCompleteCB;
