@@ -159,7 +159,7 @@ void LiveTrainRenderer::doPythonInference()
         py::buffer_info arr_info = arr.request();
 
         // Upload the Python uchar array into our texture (so we can render the result)
-        gpDevice->getRenderContext()->updateTextureSubresource(mPythonReturnTexture.get(), mPythonReturnTexture->getSubresourceIndex(0, 0), arr_info.ptr);
+        gpDevice->getRenderContext()->updateSubresourceData(mPythonReturnTexture.get(), mPythonReturnTexture->getSubresourceIndex(0, 0), arr_info.ptr);
     }
 
     mDoInference = false;
@@ -182,7 +182,7 @@ void LiveTrainRenderer::doRandomTrain()
     if (mTrainsLeft>0) mTrainsLeft--;
 }
 
-void LiveTrainRenderer::onFrameRender(SampleCallbacks* pSample, RenderContext* pRenderContext, Fbo::SharedPtr pTargetFbo)
+void LiveTrainRenderer::onFrameRender(SampleCallbacks* pSample, RenderContext* pRenderContext, const Fbo::SharedPtr& pTargetFbo)
 {
     pRenderContext->clearFbo(pTargetFbo.get(), vec4(0.2f, 0.4f, 0.5f, 1), 1, 0);
 
@@ -237,7 +237,7 @@ void LiveTrainRenderer::onGuiRender(SampleCallbacks* pSample, Gui* pGui)
         if (pGui->addButton("Load Scene"))
         {
             std::string filename;
-            if (openFileDialog(Scene::kFileFormatString, filename))
+            if (openFileDialog(Scene::kFileExtensionFilters, filename))
             {
                 initNewScene(SceneRenderer::create(loadScene(filename)));
             }
@@ -428,7 +428,7 @@ void LiveTrainRenderer::lightingPass(RenderContext* pContext)
 {
     pContext->getGraphicsState()->setProgram(mLightingPass.pProgram);
     pContext->setGraphicsVars(mLightingPass.pVars);
-    mpScene->renderScene(pContext.get());
+    mpScene->renderScene(pContext);
 }
 
 void LiveTrainRenderer::initLightingPass()

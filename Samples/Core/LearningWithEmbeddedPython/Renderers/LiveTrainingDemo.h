@@ -55,7 +55,7 @@ public:
     /** Callbacks overridden from Renderer base class
         */
     virtual void onLoad(SampleCallbacks* pSample, RenderContext* pRenderContext) override;
-    virtual void onFrameRender(SampleCallbacks* pSample, RenderContext* pRenderContext, Fbo::SharedPtr pTargetFbo) override;
+    virtual void onFrameRender(SampleCallbacks* pSample, RenderContext* pRenderContext, const Fbo::SharedPtr& pTargetFbo) override;
     virtual void onResizeSwapChain(SampleCallbacks* pSample, uint32_t width, uint32_t height) override;
     virtual bool onKeyEvent(SampleCallbacks* pSample, const KeyboardEvent& keyEvent) override;
     virtual bool onMouseEvent(SampleCallbacks* pSample, const MouseEvent& mouseEvent) override;

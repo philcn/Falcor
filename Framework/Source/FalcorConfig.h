@@ -39,4 +39,4 @@
 
 #define _ENABLE_NVAPI false // Controls NVIDIA specific DX extensions. If it is set to true, make sure you have the NVAPI package in your 'Externals' directory. View the readme for more information.
 
-#define FALCOR_USE_PYTHON                   0 // Set to 1 to build Python embedding API and samples.  See README.txt in "LearningWithEmbeddedPython" sample for more information.
+#define FALCOR_USE_PYTHON                   1 // Set to 1 to build Python embedding API and samples.  See README.txt in "LearningWithEmbeddedPython" sample for more information.
