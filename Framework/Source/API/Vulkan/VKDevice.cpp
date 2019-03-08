@@ -294,8 +294,18 @@ namespace Falcor
             appendVrExtensions(requiredExtensions, vrExt, supportedExtensions);
         }
 
+        VkApplicationInfo applicationInfo;
+        applicationInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+        applicationInfo.pNext = nullptr;
+        applicationInfo.pApplicationName = "Falcor";
+        applicationInfo.applicationVersion = 1;
+        applicationInfo.pEngineName = nullptr;
+        applicationInfo.engineVersion = 0;
+        applicationInfo.apiVersion = VK_MAKE_VERSION(desc.apiMajorVersion, desc.apiMinorVersion, 0);
+
         VkInstanceCreateInfo instanceCreateInfo = {};
         instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+        instanceCreateInfo.pApplicationInfo = &applicationInfo;
         instanceCreateInfo.enabledLayerCount = (uint32_t)requiredLayers.size();
         instanceCreateInfo.ppEnabledLayerNames = requiredLayers.data();
         instanceCreateInfo.enabledExtensionCount = (uint32_t)requiredExtensions.size();
