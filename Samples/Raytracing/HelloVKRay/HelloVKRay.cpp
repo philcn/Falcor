@@ -1,8 +1,6 @@
 #include "HelloVKRay.h"
 #include "Framework.h"
-
-#include "Shlwapi.h"
-#pragma comment(lib, "shlwapi.lib")
+#include "API/Vulkan/FalcorVK.h"
 
 #define NVVK_RESOLVE_DEVICE_FUNCTION_ADDRESS(device, funcName) \
     { \
@@ -14,114 +12,80 @@
         } \
     }
 
-#define NVVK_CHECK_ERROR(code, message) \
-    { \
-        if (code != VK_SUCCESS) \
-        { \
-            logErrorAndExit(message + std::string(" ErrorCode: ") + std::to_string(code)); \
-        } \
-    }
+#define NVVK_CHECK_ERROR(code, message) { if (code != VK_SUCCESS) { logErrorAndExit(message + std::string(" ErrorCode: ") + std::to_string(code)); } }
 
-static VkPhysicalDeviceMemoryProperties s_physicalDeviceMemoryProperties;
-
-static uint32_t GetMemoryType(VkMemoryRequirements& memoryRequiriments, VkMemoryPropertyFlags memoryProperties)
+class RtShader : public Shader
 {
-    uint32_t result = 0;
-    for (uint32_t memoryTypeIndex = 0; memoryTypeIndex < VK_MAX_MEMORY_TYPES; ++memoryTypeIndex)
-    {
-        if (memoryRequiriments.memoryTypeBits & (1 << memoryTypeIndex))
-        {
-            if ((s_physicalDeviceMemoryProperties.memoryTypes[memoryTypeIndex].propertyFlags & memoryProperties) == memoryProperties)
-            {
-                result = memoryTypeIndex;
-                break;
-            }
-        }
-    }
-    return result;
-}
-
-class ShaderResource
-{
-private:
-    VkShaderModule _module = VK_NULL_HANDLE;
 public:
-    ~ShaderResource();
-    static std::string GetFolderPath();
-    VkResult LoadFromFile(const std::string& fileName, bool& cantOpenFile);
-    void Cleanup();
-    VkPipelineShaderStageCreateInfo GetShaderStage(VkShaderStageFlagBits stage);
+    using SharedPtr = std::shared_ptr<RtShader>;
+
+    struct Blob : ISlangBlob
+    {
+        Blob(void* code, size_t size) : mCode(code), mSize(size) {}
+
+        virtual void const* getBufferPointer() override { return mCode; }
+        virtual size_t getBufferSize() override { return mSize; }
+
+        virtual SlangResult queryInterface(SlangUUID const& uuid, void** outObject) override { return 0; }
+        virtual uint32_t addRef() override { return 0; }
+        virtual uint32_t release() override { return 0; }
+
+        void* mCode;
+        size_t mSize;
+    };
+
+    ~RtShader() {}
+
+    const std::string& getEntryPoint() const { return mEntryPoint; }
+    VkPipelineShaderStageCreateInfo getShaderStage(VkShaderStageFlagBits stage);
+
+    static SharedPtr create(const std::string& filename, const std::string& entryPointName, ShaderType type);
+
+private:
+    RtShader(ShaderType type, const std::string& entryPointName) : Shader(type), mEntryPoint(entryPointName) {}
+    std::string mEntryPoint;
 };
 
-ShaderResource::~ShaderResource()
+RtShader::SharedPtr RtShader::create(const std::string& filename, const std::string& entryPointName, ShaderType type)
 {
-    Cleanup();
-}
-
-std::string ShaderResource::GetFolderPath()
-{
-    TCHAR dest[MAX_PATH];
-    const DWORD length = GetModuleFileName(nullptr, dest, MAX_PATH);
-    PathRemoveFileSpec(dest);
-
-    std::wstring basePathW = std::wstring(dest);
-    return std::string(basePathW.begin(), basePathW.end()) + "\\";
-}
-
-VkResult ShaderResource::LoadFromFile(const std::string& fileName, bool& cantOpenFile)
-{
-    cantOpenFile = false;
-
-    const std::string filePath = GetFolderPath() + fileName;
-    std::ifstream fileStream(filePath, std::ios::binary | std::ios::in | std::ios::ate);
-    if (!fileStream.is_open())
+    std::string fullpath;
+    if (findFileInDataDirectories(filename, fullpath) == false)
     {
-        cantOpenFile = true;
-        return VK_SUCCESS;
+        msgBox("Error when loading shader. Can't find shader file " + filename);
+        //could not find file
+        return nullptr;
     }
+
+    std::ifstream fileStream(fullpath, std::ios::binary | std::ios::in | std::ios::ate);
+    assert(fileStream.is_open());
+
     const size_t shaderSize = fileStream.tellg();
     fileStream.seekg(0, std::ios::beg);
     std::vector<char> bytecode(shaderSize);
     fileStream.read(bytecode.data(), shaderSize);
     fileStream.close();
 
-    VkShaderModuleCreateInfo shaderModuleCreateInfo;
-    shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    shaderModuleCreateInfo.pNext = nullptr;
-    shaderModuleCreateInfo.codeSize = shaderSize;
-    shaderModuleCreateInfo.pCode = (uint32_t*)bytecode.data();
-    shaderModuleCreateInfo.flags = 0;
+    Blob blob((void*)bytecode.data(), shaderSize);
+    ComPtr<ISlangBlob> blob2(&blob);
 
-    const VkResult code = vkCreateShaderModule(gpDevice->getApiHandle(), &shaderModuleCreateInfo, nullptr, &_module);
-    if (code != VK_SUCCESS)
-    {
-        _module = VK_NULL_HANDLE;
-    }
-
-    return code;
+    std::string log;
+    SharedPtr pShader = SharedPtr(new RtShader(type, entryPointName));
+    return pShader->init(blob2, entryPointName, Shader::CompilerFlags::None, log) ? pShader : nullptr;
 }
 
-VkPipelineShaderStageCreateInfo ShaderResource::GetShaderStage(VkShaderStageFlagBits stage)
+VkPipelineShaderStageCreateInfo RtShader::getShaderStage(VkShaderStageFlagBits stage)
 {
     VkPipelineShaderStageCreateInfo result;
     result.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     result.pNext = nullptr;
     result.stage = stage;
-    result.module = _module;
-    result.pName = "main";
+    result.module = mApiHandle;
+    result.pName = mEntryPoint.c_str();
     result.flags = 0;
     result.pSpecializationInfo = nullptr;
     return result;
 }
 
-void ShaderResource::Cleanup()
-{
-    if (_module)
-    {
-        vkDestroyShaderModule(gpDevice->getApiHandle(), _module, nullptr);
-        _module = VK_NULL_HANDLE;
-    }
-}
 
 void HelloVKRay::onGuiRender(SampleCallbacks* pSample, Gui* pGui)
 {
@@ -129,8 +93,6 @@ void HelloVKRay::onGuiRender(SampleCallbacks* pSample, Gui* pGui)
 
 void HelloVKRay::onLoad(SampleCallbacks* pSample, RenderContext* pRenderContext)
 {
-    vkGetPhysicalDeviceMemoryProperties(gpDevice->getApiHandle(), &s_physicalDeviceMemoryProperties);
-
     InitRayTracing();
     CreateAccelerationStructures();
     CreatePipeline();
@@ -257,7 +219,7 @@ void HelloVKRay::CreateAccelerationStructures()
         memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
         memoryAllocateInfo.pNext = nullptr;
         memoryAllocateInfo.allocationSize = memoryRequirements.memoryRequirements.size;
-        memoryAllocateInfo.memoryTypeIndex = GetMemoryType(memoryRequirements.memoryRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        memoryAllocateInfo.memoryTypeIndex = gpDevice->getVkMemoryType(Device::MemoryType::Default, memoryRequirements.memoryRequirements.memoryTypeBits);
 
         code = vkAllocateMemory(gpDevice->getApiHandle(), &memoryAllocateInfo, nullptr, &memory);
         NVVK_CHECK_ERROR(code, "rt AS vkAllocateMemory");
@@ -407,27 +369,15 @@ void HelloVKRay::CreatePipeline()
 
     // CREATE PIPELINE
     {
-        auto LoadShader = [](ShaderResource& shader, std::string shaderName)
-        {
-            bool fileError;
-            VkResult code = shader.LoadFromFile(shaderName, fileError);
-            if (fileError)
-            {
-                logErrorAndExit("Failed to read " + shaderName + " file");
-            }
-            NVVK_CHECK_ERROR(code, shaderName);
-        };
-
-        ShaderResource rgenShader, chitShader, missShader;
-        LoadShader(rgenShader, "Data/rt_06_shaders.rgen.spv");
-        LoadShader(chitShader, "Data/rt_06_shaders.rchit.spv");
-        LoadShader(missShader, "Data/rt_06_shaders.rmiss.spv");
+        RtShader::SharedPtr raygenShader = RtShader::create("Data/rt_06_shaders.rgen.spv", "main", ShaderType::RayGeneration);
+        RtShader::SharedPtr chitShader = RtShader::create("Data/rt_06_shaders.rchit.spv", "main", ShaderType::ClosestHit);
+        RtShader::SharedPtr missShader = RtShader::create("Data/rt_06_shaders.rmiss.spv", "main", ShaderType::Miss);
 
         std::vector<VkPipelineShaderStageCreateInfo> shaderStages(
             {
-                rgenShader.GetShaderStage(VK_SHADER_STAGE_RAYGEN_BIT_NV),
-                chitShader.GetShaderStage(VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV),
-                missShader.GetShaderStage(VK_SHADER_STAGE_MISS_BIT_NV),
+                raygenShader->getShaderStage(VK_SHADER_STAGE_RAYGEN_BIT_NV),
+                chitShader->getShaderStage(VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV),
+                missShader->getShaderStage(VK_SHADER_STAGE_MISS_BIT_NV),
             });
 
         VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo;
@@ -584,6 +534,40 @@ void HelloVKRay::onFrameRender(SampleCallbacks* pSample, RenderContext* pRenderC
 
 void HelloVKRay::onShutdown(SampleCallbacks* pSample)
 {
+    VkDevice device = gpDevice->getApiHandle();
+
+    if (_topAS)
+    {
+        vkDestroyAccelerationStructureNV(device, _topAS, nullptr);
+    }
+    if (_topASMemory)
+    {
+        vkFreeMemory(device, _topASMemory, nullptr);
+    }
+    if (_bottomAS)
+    {
+        vkDestroyAccelerationStructureNV(device, _bottomAS, nullptr);
+    }
+    if (_bottomASMemory)
+    {
+        vkFreeMemory(device, _bottomASMemory, nullptr);
+    }
+    if (_rtDescriptorPool)
+    {
+        vkDestroyDescriptorPool(device, _rtDescriptorPool, nullptr);
+    }
+    if (_rtPipeline)
+    {
+        vkDestroyPipeline(device, _rtPipeline, nullptr);
+    }
+    if (_rtPipelineLayout)
+    {
+        vkDestroyPipelineLayout(device, _rtPipelineLayout, nullptr);
+    }
+    if (_rtDescriptorSetLayout)
+    {
+        vkDestroyDescriptorSetLayout(device, _rtDescriptorSetLayout, nullptr);
+    }
 }
 
 bool HelloVKRay::onKeyEvent(SampleCallbacks* pSample, const KeyboardEvent& keyEvent)
