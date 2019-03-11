@@ -105,7 +105,9 @@ namespace Falcor
         void setUav(uint32_t rangeIndex, uint32_t descIndex, const UnorderedAccessView* pUav);
         void setSampler(uint32_t rangeIndex, uint32_t descIndex, const Sampler* pSampler);
         void setCbv(uint32_t rangeIndex, uint32_t descIndex, const ConstantBufferView::SharedPtr& pView);
+#ifdef FALCOR_VK
         void setAccelerationStructure(uint32_t rangeIndex, uint32_t descIndex, const AccelerationStructureHandle& pAccelerationStructure);
+#endif
 
         void bindForGraphics(CopyContext* pCtx, const RootSignature* pRootSig, uint32_t rootIndex);
         void bindForCompute(CopyContext* pCtx, const RootSignature* pRootSig, uint32_t rootIndex);

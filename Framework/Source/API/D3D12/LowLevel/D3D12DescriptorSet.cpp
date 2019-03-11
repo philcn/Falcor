@@ -107,11 +107,6 @@ namespace Falcor
         setCpuHandle(this, rangeIndex, descIndex, pSampler->getApiHandle()->getCpuHandle(0));
     }
 
-    void DescriptorSet::setAccelerationStructure(uint32_t rangeIndex, uint32_t descIndex, const AccelerationStructureHandle& pAccelerationStructure)
-    {
-        UNSUPPORTED_IN_D3D12("DescriptorSet::setAccelerationStructure()");
-    }
-
     void DescriptorSet::bindForGraphics(CopyContext* pCtx, const RootSignature* pRootSig, uint32_t rootIndex)
     {
         pCtx->getLowLevelData()->getCommandList()->SetGraphicsRootDescriptorTable(rootIndex, getGpuHandle(0));
