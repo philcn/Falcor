@@ -178,6 +178,7 @@ namespace Falcor
 
     // The max scalars supported by our driver
     #define FALCOR_RT_MAX_PAYLOAD_SIZE_IN_BYTES (14 * sizeof(float))
+    #define FALCOR_RT_MAX_ATTRIBUTE_SIZE_IN_BYTES D3D12_RAYTRACING_MAX_ATTRIBUTE_SIZE_IN_BYTES
 
     // DXGI
     MAKE_SMART_COM_PTR(IDXGISwapChain3);

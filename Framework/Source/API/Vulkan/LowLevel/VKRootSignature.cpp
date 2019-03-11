@@ -62,6 +62,30 @@ namespace Falcor
         {
             flags |= VK_SHADER_STAGE_COMPUTE_BIT;
         }
+        if ((visibility & ShaderVisibility::RayGeneration) != ShaderVisibility::None)
+        {
+            flags |= VK_SHADER_STAGE_RAYGEN_BIT_NV;
+        }
+        if ((visibility & ShaderVisibility::Intersection) != ShaderVisibility::None)
+        {
+            flags |= VK_SHADER_STAGE_INTERSECTION_BIT_NV;
+        }
+        if ((visibility & ShaderVisibility::AnyHit) != ShaderVisibility::None)
+        {
+            flags |= VK_SHADER_STAGE_ANY_HIT_BIT_NV;
+        }
+        if ((visibility & ShaderVisibility::ClosestHit) != ShaderVisibility::None)
+        {
+            flags |= VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV;
+        }
+        if ((visibility & ShaderVisibility::Miss) != ShaderVisibility::None)
+        {
+            flags |= VK_SHADER_STAGE_MISS_BIT_NV;
+        }
+        if ((visibility & ShaderVisibility::Callable) != ShaderVisibility::None)
+        {
+            flags |= VK_SHADER_STAGE_CALLABLE_BIT_NV;
+        }
         return flags;
     }
     

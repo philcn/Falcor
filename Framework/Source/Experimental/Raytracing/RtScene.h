@@ -43,7 +43,12 @@ namespace Falcor
         static RtScene::SharedPtr create(RtBuildFlags rtFlags);
         static RtScene::SharedPtr createFromModel(RtModel::SharedPtr pModel);
 
+#ifdef FALCOR_VK
+        AccelerationStructureHandle getTlas(uint32_t hitProgCount) { createTlas(hitProgCount); return mpTopLevelAS; }
+#else
         ShaderResourceView::SharedPtr getTlasSrv(uint32_t hitProgCount) { createTlas(hitProgCount); return mTlasSrv; }
+#endif
+
         void addModelInstance(const ModelInstance::SharedPtr& pInstance) override;
         using Scene::addModelInstance;
         uint32_t getGeometryCount(uint32_t rayCount) { createTlas(rayCount); return mGeometryCount; }
@@ -61,14 +66,38 @@ namespace Falcor
         void setRefit(bool enableRefit) { mEnableRefit = enableRefit; }
 
     protected:
-        RtScene(RtBuildFlags rtFlags) : mRtFlags(rtFlags), mpSkinningCache(SkinningCache::create()) {}
+        RtScene(RtBuildFlags rtFlags) : mRtFlags(rtFlags)
+#ifdef FALCOR_D3D12
+            , mpSkinningCache(SkinningCache::create())
+#endif
+        {}
+
         uint32_t mTlasHitProgCount = -1;
         RtBuildFlags mRtFlags;
 
+#ifdef FALCOR_VK
+        AccelerationStructureHandle mpTopLevelAS;
+#else
         Buffer::SharedPtr mpTopLevelAS;             // The top-level acceleration structure for the model
         ShaderResourceView::SharedPtr mTlasSrv;
+#endif
+
         void createTlas(uint32_t rayCount);
+
+#ifdef FALCOR_VK
+        struct VkGeometryInstance
+        {
+            float transform[12];
+            uint32_t instanceId : 24;
+            uint32_t mask : 8;
+            uint32_t instanceOffset : 24;
+            uint32_t flags : 8;
+            uint64_t accelerationStructureHandle;
+        };
+        std::vector<VkGeometryInstance> createInstanceDesc(const RtScene* pScene, uint32_t hitProgCount);
+#else
         std::vector<D3D12_RAYTRACING_INSTANCE_DESC> createInstanceDesc(const RtScene* pScene, uint32_t hitProgCount);
+#endif
 
         uint32_t mGeometryCount = 0;    // The total number of geometries in the scene
         uint32_t mInstanceCount = 0;    // The total number of TLAS instances in the scene
@@ -84,7 +113,9 @@ namespace Falcor
         std::unordered_map<const Model*, RtModel::SharedPtr> mModelToRtModel;
         std::unordered_map<IMovableObject*, IMovableObject::SharedPtr> mModelInstanceToRtModelInstance;
 
+#ifdef FALCOR_D3D12
         SkinningCache::SharedPtr mpSkinningCache;
+#endif
 
         bool mEnableRefit = false;
         bool mRefit = false;

@@ -107,7 +107,7 @@ namespace Falcor
         vkCmdSetScissor(cmdList, 0, (uint32_t)scissors.size(), vkScissors.data());
     }
 
-    static VkIndexType getVkIndexType(ResourceFormat format)
+    VkIndexType getVkIndexType(ResourceFormat format)
     {
         switch (format)
         {

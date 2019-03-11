@@ -156,6 +156,30 @@ namespace Falcor
         vkUpdateDescriptorSets(gpDevice->getApiHandle(), 1, &write, 0, nullptr);
     }
 
+    void DescriptorSet::setAccelerationStructure(uint32_t rangeIndex, uint32_t descIndex, const AccelerationStructureHandle& pAccelerationStructure)
+    {
+        VkAccelerationStructureNV asHandle = pAccelerationStructure;
+
+        VkWriteDescriptorSetAccelerationStructureNV descriptorAccelerationStructureInfo;
+        descriptorAccelerationStructureInfo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_NV;
+        descriptorAccelerationStructureInfo.pNext = nullptr;
+        descriptorAccelerationStructureInfo.accelerationStructureCount = 1;
+        descriptorAccelerationStructureInfo.pAccelerationStructures = &asHandle;
+
+        VkWriteDescriptorSet write;
+        write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        write.pNext = &descriptorAccelerationStructureInfo;
+        write.dstSet = mApiHandle;
+        write.dstBinding = mLayout.getRange(rangeIndex).baseRegIndex;
+        write.dstArrayElement = descIndex;
+        write.descriptorCount = 1;
+        write.descriptorType = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV;
+        write.pImageInfo = nullptr;
+        write.pBufferInfo = nullptr;
+        write.pTexelBufferView = nullptr;
+        vkUpdateDescriptorSets(gpDevice->getApiHandle(), 1, &write, 0, nullptr);
+    }
+
     template<bool forGraphics>
     static void bindCommon(DescriptorSet::ApiHandle set, CopyContext* pCtx, const RootSignature* pRootSig, uint32_t bindLocation)
     {

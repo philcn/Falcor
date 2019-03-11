@@ -54,6 +54,8 @@ namespace Falcor
             return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
         case DescriptorPool::Type::Sampler:
             return VK_DESCRIPTOR_TYPE_SAMPLER;
+        case DescriptorPool::Type::AccelerationStructure:
+            return VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV;
         default:
             should_not_get_here();
             return VK_DESCRIPTOR_TYPE_MAX_ENUM;

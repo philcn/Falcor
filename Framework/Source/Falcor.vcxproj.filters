@@ -571,6 +571,21 @@
       <Filter>Experimental\RenderGraph</Filter>
     </ClCompile>
     <ClCompile Include="UnitTest.cpp" />
+    <ClCompile Include="Experimental\Raytracing\Vulkan\VKRtModel.cpp">
+      <Filter>Experimental\Raytracing\Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="Experimental\Raytracing\D3D12\D3D12RtModel.cpp">
+      <Filter>Experimental\Raytracing\D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="Experimental\Raytracing\D3D12\D3D12RtScene.cpp">
+      <Filter>Experimental\Raytracing\D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="Experimental\Raytracing\Vulkan\VkRtScene.cpp">
+      <Filter>Experimental\Raytracing\Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="Experimental\Raytracing\Vulkan\VKRtApi.cpp">
+      <Filter>Experimental\Raytracing\Vulkan</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Graphics\Model\Animation.h">
@@ -2328,6 +2343,12 @@
     </Filter>
     <Filter Include="Experimental\RenderGraph">
       <UniqueIdentifier>{60443751-4f7a-4361-adb2-d3e6edabecf8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Experimental\Raytracing\Vulkan">
+      <UniqueIdentifier>{b096a6e1-930f-4be3-a6ad-ce53aaafeb91}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Experimental\Raytracing\D3D12">
+      <UniqueIdentifier>{069f3bc2-70ce-495a-9e77-556ce9f7e32c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

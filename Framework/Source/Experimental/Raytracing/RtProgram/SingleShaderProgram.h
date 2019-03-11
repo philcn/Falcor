@@ -60,7 +60,11 @@ namespace Falcor
             Desc d(str);
             d.setCompilerFlags(flags);
             d.entryPoint((ShaderType)shaderType, entryPoint);
+#ifdef FALCOR_VK
+            d.setShaderModel("460");
+#else
             d.setShaderModel("6_3");
+#endif
             pProg->init(d, programDefines);
             return pProg;
         }

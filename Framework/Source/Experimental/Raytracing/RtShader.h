@@ -41,6 +41,11 @@ namespace Falcor
         ~RtShader();
 
         const std::string& getEntryPoint() const { return mEntryPoint; }
+
+#ifdef FALCOR_VK
+        VkPipelineShaderStageCreateInfo getShaderStage(VkShaderStageFlagBits stage);
+#endif
+
     private:
         RtShader(ShaderType type, const std::string& entryPointName);
         std::string mEntryPoint;
