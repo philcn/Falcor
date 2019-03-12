@@ -4,6 +4,7 @@
 #include "Experimental/Raytracing/RtScene.h"
 #include "Experimental/Raytracing/RtShader.h"
 #include "Experimental/Raytracing/RtProgram/RtProgram.h"
+#include "Experimental/Raytracing/RtState.h"
 
 using namespace Falcor;
 
@@ -19,10 +20,8 @@ public:
     void onDataReload(SampleCallbacks* pSample) override;
     void onGuiRender(SampleCallbacks* pSample, Gui* pGui) override;
 private:
-    void CreatePipeline();
     void CreateShaderBindingTable();
 
-    VkPipeline _rtPipeline = VK_NULL_HANDLE;
     VkPhysicalDeviceRayTracingPropertiesNV _rayTracingProperties = { };
 
     RtModel::SharedPtr mRtModel;
@@ -32,7 +31,10 @@ private:
     DescriptorSet::Layout mSetLayout;
     DescriptorSet::SharedPtr mDescriptorSet;
     RtProgram::SharedPtr mRtProgram;
+    RtState::SharedPtr mRtState;
 
     Buffer::SharedPtr mShaderBindingTable;
     Texture::SharedPtr mRenderTarget;
+
+    ComputeStateHandle mCachedPipeline;
 };

@@ -586,6 +586,18 @@
     <ClCompile Include="Experimental\Raytracing\Vulkan\VKRtApi.cpp">
       <Filter>Experimental\Raytracing\Vulkan</Filter>
     </ClCompile>
+    <ClCompile Include="Experimental\Raytracing\Vulkan\VkRtStateObject.cpp">
+      <Filter>Experimental\Raytracing\Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="Experimental\Raytracing\D3D12\D3D12RtStateObject.cpp">
+      <Filter>Experimental\Raytracing\D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="Experimental\Raytracing\D3D12\D3D12RtState.cpp">
+      <Filter>Experimental\Raytracing\D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="Experimental\Raytracing\Vulkan\VkRtState.cpp">
+      <Filter>Experimental\Raytracing\Vulkan</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Graphics\Model\Animation.h">
@@ -2077,9 +2089,6 @@
     <ClInclude Include="Experimental\Raytracing\RtStateObject.h">
       <Filter>Experimental\Raytracing</Filter>
     </ClInclude>
-    <ClInclude Include="Experimental\Raytracing\RtStateObjectHelper.h">
-      <Filter>Experimental\Raytracing</Filter>
-    </ClInclude>
     <ClInclude Include="Experimental\Raytracing\RtProgram\HitProgram.h">
       <Filter>Experimental\Raytracing\RtProgram</Filter>
     </ClInclude>
@@ -2134,6 +2143,9 @@
     </ClInclude>
     <ClInclude Include="Experimental\RenderGraph\ResourceCache.h">
       <Filter>Experimental\RenderGraph</Filter>
+    </ClInclude>
+    <ClInclude Include="Experimental\Raytracing\D3D12\D3D12RtStateObjectHelper.h">
+      <Filter>Experimental\Raytracing\D3D12</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

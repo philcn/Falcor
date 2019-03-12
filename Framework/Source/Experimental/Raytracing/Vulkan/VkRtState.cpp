@@ -25,49 +25,38 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
-#pragma once
-#include "RtProgram/RtProgramVersion.h"
+#include "Framework.h"
+#include "Experimental/Raytracing/RtState.h"
 
 namespace Falcor
 {
-    class RtStateObject : public std::enable_shared_from_this<RtStateObject>
+    RtStateObject::SharedPtr RtState::getRtso()
     {
-    public:
-        using SharedPtr = std::shared_ptr<RtStateObject>;
-        using SharedConstPtr = std::shared_ptr<const RtStateObject>;
-#ifdef FALCOR_VK
-        using ApiHandle = ComputeStateHandle;
-#else
-        using ApiHandle = ID3D12StateObjectPtr;
-#endif
-
-        using ProgramList = std::vector<RtProgramVersion::SharedConstPtr>;
-
-        class Desc
+        if (!mpRtso)
         {
-        public:
-            Desc& setProgramList(const ProgramList& list) { mProgList = list; return *this; }
-            Desc& setMaxTraceRecursionDepth(uint32_t maxDepth) { mMaxTraceRecursionDepth = maxDepth; return *this; }
-            Desc& setGlobalRootSignature(const std::shared_ptr<RootSignature>& pRootSig) { mpGlobalRootSignature = pRootSig; return *this; }
-            bool operator==(const Desc& other) const;
+            RtStateObject::ProgramList programs = createProgramList();
 
-        private:
-            ProgramList mProgList;
-            std::shared_ptr<RootSignature> mpGlobalRootSignature;
-            uint32_t mMaxTraceRecursionDepth = 1;
-            friend RtStateObject;
-        };
+            RtStateObject::Desc desc;
+            desc.setProgramList(programs).setMaxTraceRecursionDepth(mMaxTraceRecursionDepth);
+            desc.setGlobalRootSignature(mpProgram->getGlobalRootSignature());
 
-        static SharedPtr create(const Desc& desc);
-        const ApiHandle& getApiHandle() const { return mApiHandle; }
+            mpRtso = RtStateObject::create(desc);
+        }
+       
+        return mpRtso;
+    }
 
-        const ProgramList& getProgramList() const { return mDesc.mProgList; }
-        uint32_t getMaxTraceRecursionDepth() const { return mDesc.mMaxTraceRecursionDepth; }
-        const std::shared_ptr<RootSignature>& getGlobalRootSignature() const { return mDesc.mpGlobalRootSignature; }
-        const Desc& getDesc() const { return mDesc; }
-    private:
-        RtStateObject(const Desc& d) : mDesc(d) {}
-        ApiHandle mApiHandle;
-        Desc mDesc;
-    };
+    void RtState::setMaxTraceRecursionDepth(uint32_t maxDepth)
+    {
+        if (mMaxTraceRecursionDepth != maxDepth)
+        {
+            mMaxTraceRecursionDepth = maxDepth;
+
+            if (mpRtso)
+            {
+                mpRtso.reset();
+                (void)getRtso();
+            }
+        }
+    }
 }

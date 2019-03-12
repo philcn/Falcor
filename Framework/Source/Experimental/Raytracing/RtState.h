@@ -52,8 +52,13 @@ namespace Falcor
         RtState();
         RtProgram::SharedPtr mpProgram;
         uint32_t mMaxTraceRecursionDepth = 1;
+
+#ifdef FALCOR_D3D12
         using StateGraph = Graph<RtStateObject::SharedPtr, void*>;
         StateGraph::SharedPtr mpRtsoGraph;
+#else
+        RtStateObject::SharedPtr mpRtso;
+#endif
 
         RtStateObject::ProgramList createProgramList() const;
     };

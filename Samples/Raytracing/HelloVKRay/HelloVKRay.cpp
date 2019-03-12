@@ -60,8 +60,8 @@ void HelloVKRay::onLoad(SampleCallbacks* pSample, RenderContext* pRenderContext)
 
         RootSignature::Desc desc;
         desc.addDescriptorSet(setLayout);
-        //mRootSignature = RootSignature::create(desc);
-        mRootSignature = mRtProgram->getGlobalRootSignature();
+        mRootSignature = RootSignature::create(desc);
+        // mRootSignature = mRtProgram->getGlobalRootSignature();
 
         auto swapchain = gpDevice->getSwapChainFbo();
         mRenderTarget = Texture::create2D(swapchain->getWidth(), swapchain->getHeight(), ResourceFormat::RGBA8Unorm, 1, 1, nullptr, Resource::BindFlags::UnorderedAccess | Resource::BindFlags::ShaderResource);
@@ -71,41 +71,15 @@ void HelloVKRay::onLoad(SampleCallbacks* pSample, RenderContext* pRenderContext)
         mDescriptorSet->setUav(1, 0, mRenderTarget->getUAV().get());
     }
 
-    CreatePipeline();
+    {
+        mRtState = RtState::create();
+        mRtState->setMaxTraceRecursionDepth(10);
+        mRtState->setProgram(mRtProgram);
+
+        mCachedPipeline = mRtState->getRtso()->getApiHandle();
+    }
+
     CreateShaderBindingTable();
-}
-
-void HelloVKRay::CreatePipeline()
-{
-    std::vector<VkPipelineShaderStageCreateInfo> shaderStages({
-        mRtProgram->getRayGenProgram()->getActiveVersion()->getShader(ShaderType::RayGeneration)->getShaderStage(VK_SHADER_STAGE_RAYGEN_BIT_NV),
-        mRtProgram->getHitProgram(0)->getActiveVersion()->getShader(ShaderType::ClosestHit)->getShaderStage(VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV),
-        mRtProgram->getMissProgram(0)->getActiveVersion()->getShader(ShaderType::Miss)->getShaderStage(VK_SHADER_STAGE_MISS_BIT_NV),
-    });
-
-    std::vector<VkRayTracingShaderGroupCreateInfoNV> shaderGroups({
-        // group0 = [ raygen ]
-        { VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_NV, nullptr, VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_NV, 0, VK_SHADER_UNUSED_NV, VK_SHADER_UNUSED_NV, VK_SHADER_UNUSED_NV },
-        // group1 = [ chit ]
-        { VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_NV, nullptr, VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_NV, VK_SHADER_UNUSED_NV, 1, VK_SHADER_UNUSED_NV, VK_SHADER_UNUSED_NV },
-        // group2 = [ miss ]
-        { VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_NV, nullptr, VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_NV, 2, VK_SHADER_UNUSED_NV, VK_SHADER_UNUSED_NV, VK_SHADER_UNUSED_NV },
-    });
-
-    VkRayTracingPipelineCreateInfoNV rayPipelineInfo;
-    rayPipelineInfo.sType = VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_NV;
-    rayPipelineInfo.pNext = nullptr;
-    rayPipelineInfo.flags = 0;
-    rayPipelineInfo.stageCount = (uint32_t)shaderStages.size();
-    rayPipelineInfo.pStages = shaderStages.data();
-    rayPipelineInfo.groupCount = (uint32_t)shaderGroups.size();
-    rayPipelineInfo.pGroups = shaderGroups.data();
-    rayPipelineInfo.maxRecursionDepth = 1;
-    rayPipelineInfo.layout = mRootSignature->getApiHandle();
-    rayPipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
-    rayPipelineInfo.basePipelineIndex = 0;
-
-    vk_call(Falcor::vkCreateRayTracingPipelinesNV(gpDevice->getApiHandle(), nullptr, 1, &rayPipelineInfo, nullptr, &_rtPipeline));
 }
 
 void HelloVKRay::CreateShaderBindingTable()
@@ -125,7 +99,7 @@ void HelloVKRay::CreateShaderBindingTable()
     const uint32_t shaderBindingTableSize = _rayTracingProperties.shaderGroupHandleSize * groupNum;
 
     std::unique_ptr<uint8_t[]> shaderIdentifier = std::make_unique<uint8_t[]>(shaderBindingTableSize);
-    vk_call(Falcor::vkGetRayTracingShaderGroupHandlesNV(gpDevice->getApiHandle(), _rtPipeline, 0, groupNum, shaderBindingTableSize, reinterpret_cast<void*>(shaderIdentifier.get())));
+    vk_call(Falcor::vkGetRayTracingShaderGroupHandlesNV(gpDevice->getApiHandle(), mCachedPipeline, 0, groupNum, shaderBindingTableSize, reinterpret_cast<void*>(shaderIdentifier.get())));
 
     mShaderBindingTable = Buffer::create(shaderBindingTableSize, Resource::BindFlags::ShaderResource, Buffer::CpuAccess::None /* can't be Write */, shaderIdentifier.get());
 }
@@ -139,7 +113,7 @@ void HelloVKRay::onFrameRender(SampleCallbacks* pSample, RenderContext* pRenderC
 
     {
         VkCommandBuffer commandBuffer = pRenderContext->getLowLevelData()->getCommandList();
-        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_RAY_TRACING_NV, _rtPipeline);
+        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_RAY_TRACING_NV, mCachedPipeline);
 
         VkDescriptorSet set = mDescriptorSet->getApiHandle();
         vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_RAY_TRACING_NV, mRootSignature->getApiHandle(), 0, 1, &set, 0, 0);
@@ -162,12 +136,6 @@ void HelloVKRay::onFrameRender(SampleCallbacks* pSample, RenderContext* pRenderC
 
 void HelloVKRay::onShutdown(SampleCallbacks* pSample)
 {
-    VkDevice device = gpDevice->getApiHandle();
-
-    if (_rtPipeline)
-    {
-        vkDestroyPipeline(device, _rtPipeline, nullptr);
-    }
 }
 
 bool HelloVKRay::onKeyEvent(SampleCallbacks* pSample, const KeyboardEvent& keyEvent)
