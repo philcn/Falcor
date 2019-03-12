@@ -454,6 +454,22 @@ namespace Falcor
         }
     }
 
+    Device::SupportedFeatures getSupportedFeatures(DeviceHandle pDevice, DeviceApiData *pData)
+    {
+        Device::SupportedFeatures supported = Device::SupportedFeatures::None;
+
+        if (isExtensionSupported("VK_NV_ray_tracing", pData->deviceExtensions))
+        {
+            supported |= Device::SupportedFeatures::Raytracing;
+        }
+        else
+        {
+            logInfo("Raytracing is not supported on this device.");
+        }
+
+        return supported;
+    }
+
     VkDevice createLogicalDevice(VkPhysicalDevice physicalDevice, DeviceApiData *pData, const Device::Desc& desc, std::vector<CommandQueueHandle> cmdQueues[Device::kQueueTypeCount])
     {
         // Features
@@ -688,6 +704,7 @@ namespace Falcor
         if (initMemoryTypes(physicalDevice, mpApiData) == false) return false;
 
         mApiHandle = DeviceHandle::create(instance, physicalDevice, device, surface);
+        mSupportedFeatures = getSupportedFeatures(mApiHandle, mpApiData);
         mGpuTimestampFrequency = getPhysicalDeviceLimits().timestampPeriod / (1000 * 1000);
 
         if (createSwapChain(desc.colorFormat) == false)
