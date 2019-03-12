@@ -641,6 +641,10 @@ namespace Falcor
         case DescriptorSet::Type::TextureUav:
         case DescriptorSet::Type::TypedBufferUav:
             return ProgramReflection::BindType::Uav;
+#ifdef FALCOR_VK
+        case DescriptorSet::Type::AccelerationStructure:
+            return ProgramReflection::BindType::AccelerationStructure;
+#endif
         default:
             should_not_get_here();
             return ProgramReflection::BindType(-1);

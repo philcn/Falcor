@@ -54,14 +54,15 @@ namespace Falcor
     }
 
 #ifdef FALCOR_VK
-    VkPipelineShaderStageCreateInfo RtShader::getShaderStage(VkShaderStageFlagBits stage)
+    VkPipelineShaderStageCreateInfo RtShader::getShaderStage(VkShaderStageFlagBits stage) const
     {
         VkPipelineShaderStageCreateInfo result;
         result.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
         result.pNext = nullptr;
         result.stage = stage;
         result.module = mApiHandle;
-        result.pName = mEntryPoint.c_str();
+        // VKRayTODO: fixme
+        result.pName = "main";// mEntryPoint.c_str();
         result.flags = 0;
         result.pSpecializationInfo = nullptr;
         return result;

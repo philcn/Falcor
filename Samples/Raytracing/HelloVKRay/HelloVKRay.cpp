@@ -1,52 +1,6 @@
 #include "HelloVKRay.h"
 #include "Framework.h"
 #include "API/Vulkan/FalcorVK.h"
-#include "Experimental/Raytracing/RtProgram/RtProgramVersion.h"
-#include "Experimental/Raytracing/RtProgram/HitProgram.h"
-#include "Experimental/Raytracing/RtProgram/SingleShaderProgram.h"
-#include "Experimental/Raytracing/RtProgram/RtProgram.h"
-
-struct Blob : ISlangBlob
-{
-    Blob(void* code, size_t size) : mCode(code), mSize(size) {}
-
-    virtual void const* getBufferPointer() override { return mCode; }
-    virtual size_t getBufferSize() override { return mSize; }
-
-    virtual SlangResult queryInterface(SlangUUID const& uuid, void** outObject) override { return 0; }
-    virtual uint32_t addRef() override { return 0; }
-    virtual uint32_t release() override { return 0; }
-
-    void* mCode;
-    size_t mSize;
-};
-
-static RtShader::SharedPtr createShaderFromSPIRV(const std::string& filename, const std::string& entryPointName, ShaderType type)
-{
-    std::string fullpath;
-    if (findFileInDataDirectories(filename, fullpath) == false)
-    {
-        msgBox("Error when loading shader. Can't find shader file " + filename);
-        //could not find file
-        return nullptr;
-    }
-
-    std::ifstream fileStream(fullpath, std::ios::binary | std::ios::in | std::ios::ate);
-    assert(fileStream.is_open());
-
-    const size_t shaderSize = fileStream.tellg();
-    fileStream.seekg(0, std::ios::beg);
-    std::vector<char> bytecode(shaderSize);
-    fileStream.read(bytecode.data(), shaderSize);
-    fileStream.close();
-
-    Blob blob((void*)bytecode.data(), shaderSize);
-    ComPtr<ISlangBlob> blob2(&blob);
-
-    std::string log;
-    auto shader = RtShader::create(blob2, entryPointName, type, Shader::CompilerFlags::None, log);
-    return shader;
-}
 
 void HelloVKRay::onGuiRender(SampleCallbacks* pSample, Gui* pGui)
 {
@@ -60,32 +14,62 @@ void HelloVKRay::onLoad(SampleCallbacks* pSample, RenderContext* pRenderContext)
         mRtModel = RtModel::createFromFile("teapot.obj", RtBuildFlags::None, Model::LoadFlags::None);
         mRtScene = RtScene::createFromModel(mRtModel);
         mTlas = mRtScene->getTlas(1);
-        gpDevice->flushAndSync();
     }
 
-    DescriptorSet::Layout setLayout;
-    setLayout.addRange(DescriptorSet::Type::AccelerationStructure, 0, 1);
-    setLayout.addRange(DescriptorSet::Type::TextureUav, 1, 1);
+    {
+        RtProgram::Desc programDesc;
+        programDesc.addShaderLibrary("Data/raytrace.slang");
+        programDesc.setRayGen("rayGen");
+        programDesc.addHitGroup(0, "closestHit", "");
+        programDesc.addMiss(0, "miss");
+        mRtProgram = RtProgram::create(programDesc);
 
-    RootSignature::Desc desc;
-    desc.addDescriptorSet(setLayout);
-    mRootSignature = RootSignature::create(desc);
+        #if 0
+        {
+            auto globalReflector = mRtProgram->getGlobalReflector();
+            auto raygenReflector = mRtProgram->getRayGenProgram()->getLocalReflector();
+            auto hitReflector = mRtProgram->getHitProgram(0)->getLocalReflector();
+            auto listParameterBlocks = [](ProgramReflection* reflector)
+            {
+                for (int i = 0; i < reflector->getParameterBlockCount(); ++i)
+                {
+                    auto pb = reflector->getParameterBlock(i);
+                    logWarning("Parameter block " + std::to_string(i) + ": " + pb->getName());
+                    for (int j = 0; j < pb->getResourceVec().size(); ++j)
+                    {
+                        auto res = pb->getResourceVec()[j];
+                        logWarning("Resource " + std::to_string(j) + ": " + res.name);
+                    }
+                }
+            };
 
-    auto swapchain = gpDevice->getSwapChainFbo();
-    mRenderTarget = Texture::create2D(swapchain->getWidth(), swapchain->getHeight(), ResourceFormat::RGBA8Unorm, 1, 1, nullptr, Resource::BindFlags::UnorderedAccess | Resource::BindFlags::ShaderResource);
+            logWarning("Reflecting global: ");
+            listParameterBlocks(globalReflector.get());
+            logWarning("Reflecting raygen shader: ");
+            listParameterBlocks(const_cast<ProgramReflection*>(raygenReflector.get()));
+            logWarning("Reflecting hit shader: ");
+            listParameterBlocks(const_cast<ProgramReflection*>(hitReflector.get()));
+        }
+        #endif
+    }
 
-    mDescriptorSet = DescriptorSet::create(gpDevice->getCpuDescriptorPool(), setLayout);
-    mDescriptorSet->setAccelerationStructure(0, 0, mTlas);
-    mDescriptorSet->setUav(1, 0, mRenderTarget->getUAV().get());
+    {
+        DescriptorSet::Layout setLayout;
+        setLayout.addRange(DescriptorSet::Type::AccelerationStructure, 0, 1);
+        setLayout.addRange(DescriptorSet::Type::TextureUav, 1, 1);
 
-#if 1
-    RtProgram::Desc programDesc;
-    programDesc.addShaderLibrary("Data/raytrace.slang");
-    programDesc.setRayGen("raygen");
-    programDesc.addHitGroup(0, "closestHit", "anyHit");
-    programDesc.addMiss(0, "miss");
-    RtProgram::SharedPtr rtProgram = RtProgram::create(programDesc);
-#endif
+        RootSignature::Desc desc;
+        desc.addDescriptorSet(setLayout);
+        //mRootSignature = RootSignature::create(desc);
+        mRootSignature = mRtProgram->getGlobalRootSignature();
+
+        auto swapchain = gpDevice->getSwapChainFbo();
+        mRenderTarget = Texture::create2D(swapchain->getWidth(), swapchain->getHeight(), ResourceFormat::RGBA8Unorm, 1, 1, nullptr, Resource::BindFlags::UnorderedAccess | Resource::BindFlags::ShaderResource);
+
+        mDescriptorSet = DescriptorSet::create(gpDevice->getCpuDescriptorPool(), setLayout);
+        mDescriptorSet->setAccelerationStructure(0, 0, mTlas);
+        mDescriptorSet->setUav(1, 0, mRenderTarget->getUAV().get());
+    }
 
     CreatePipeline();
     CreateShaderBindingTable();
@@ -93,16 +77,11 @@ void HelloVKRay::onLoad(SampleCallbacks* pSample, RenderContext* pRenderContext)
 
 void HelloVKRay::CreatePipeline()
 {
-    RtShader::SharedPtr raygenShader = createShaderFromSPIRV("Data/rt_06_shaders.rgen.spv", "main", ShaderType::RayGeneration);
-    RtShader::SharedPtr chitShader = createShaderFromSPIRV("Data/rt_06_shaders.rchit.spv", "main", ShaderType::ClosestHit);
-    RtShader::SharedPtr missShader = createShaderFromSPIRV("Data/rt_06_shaders.rmiss.spv", "main", ShaderType::Miss);
-
-    std::vector<VkPipelineShaderStageCreateInfo> shaderStages(
-        {
-            raygenShader->getShaderStage(VK_SHADER_STAGE_RAYGEN_BIT_NV),
-            chitShader->getShaderStage(VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV),
-            missShader->getShaderStage(VK_SHADER_STAGE_MISS_BIT_NV),
-        });
+    std::vector<VkPipelineShaderStageCreateInfo> shaderStages({
+        mRtProgram->getRayGenProgram()->getActiveVersion()->getShader(ShaderType::RayGeneration)->getShaderStage(VK_SHADER_STAGE_RAYGEN_BIT_NV),
+        mRtProgram->getHitProgram(0)->getActiveVersion()->getShader(ShaderType::ClosestHit)->getShaderStage(VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV),
+        mRtProgram->getMissProgram(0)->getActiveVersion()->getShader(ShaderType::Miss)->getShaderStage(VK_SHADER_STAGE_MISS_BIT_NV),
+    });
 
     std::vector<VkRayTracingShaderGroupCreateInfoNV> shaderGroups({
         // group0 = [ raygen ]
@@ -111,7 +90,7 @@ void HelloVKRay::CreatePipeline()
         { VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_NV, nullptr, VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_NV, VK_SHADER_UNUSED_NV, 1, VK_SHADER_UNUSED_NV, VK_SHADER_UNUSED_NV },
         // group2 = [ miss ]
         { VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_NV, nullptr, VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_NV, 2, VK_SHADER_UNUSED_NV, VK_SHADER_UNUSED_NV, VK_SHADER_UNUSED_NV },
-        });
+    });
 
     VkRayTracingPipelineCreateInfoNV rayPipelineInfo;
     rayPipelineInfo.sType = VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_NV;

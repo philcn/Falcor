@@ -43,7 +43,7 @@ namespace Falcor
         const std::string& getEntryPoint() const { return mEntryPoint; }
 
 #ifdef FALCOR_VK
-        VkPipelineShaderStageCreateInfo getShaderStage(VkShaderStageFlagBits stage);
+        VkPipelineShaderStageCreateInfo getShaderStage(VkShaderStageFlagBits stage) const;
 #endif
 
     private:

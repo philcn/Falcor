@@ -657,6 +657,7 @@ namespace Falcor
             Srv,        ///> Shader-resource view
             Uav,        ///> Unordered-access view
             Sampler,    ///> Sampler
+            AccelerationStructure, ///> Acceleration structure
         };
 
         /** Translate a global register location (space, index, type) to a relative bind-location in the default parameter block

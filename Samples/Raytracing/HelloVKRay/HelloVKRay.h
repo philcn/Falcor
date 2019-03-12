@@ -3,6 +3,7 @@
 #include "Experimental/Raytracing/RtModel.h"
 #include "Experimental/Raytracing/RtScene.h"
 #include "Experimental/Raytracing/RtShader.h"
+#include "Experimental/Raytracing/RtProgram/RtProgram.h"
 
 using namespace Falcor;
 
@@ -30,6 +31,7 @@ private:
     RootSignature::SharedPtr mRootSignature;
     DescriptorSet::Layout mSetLayout;
     DescriptorSet::SharedPtr mDescriptorSet;
+    RtProgram::SharedPtr mRtProgram;
 
     Buffer::SharedPtr mShaderBindingTable;
     Texture::SharedPtr mRenderTarget;
