@@ -1,6 +1,6 @@
-shared RaytracingAccelerationStructure topLevelAS;
+shared RaytracingAccelerationStructure gRtScene;
 
-shared layout(rgba8) RWTexture2D<float4> image;
+shared layout(rgba8) RWTexture2D<float4> gOutput;
 
 struct RayPayload
 {
@@ -28,7 +28,7 @@ void rayGen()
 
     TraceRay
     (
-        topLevelAS,
+        gRtScene,
         0, // ray flags; gl_RayFlagsOpaqueNV
         0xff, // cull mask
         0, // sbt record offset
@@ -38,7 +38,7 @@ void rayGen()
         payload
     );
 
-    image[int2(gl_LaunchIDNV.xy)] = float4(payload.hitValue, 1.0);
+    gOutput[int2(gl_LaunchIDNV.xy)] = float4(payload.hitValue, 1.0);
 }
 
 void closestHit(BuiltInTriangleIntersectionAttributes attribs, in out RayPayload payload)

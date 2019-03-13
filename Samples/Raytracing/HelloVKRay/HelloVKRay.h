@@ -19,8 +19,8 @@ private:
     RtProgram::SharedPtr mRtProgram;
     RtState::SharedPtr mRtState;
 
-    DescriptorSet::SharedPtr mDescriptorSet;
-    
+    GraphicsVars::SharedPtr mpGlobalVars;
+
     Buffer::SharedPtr mShaderBindingTable;
     uint32_t mShaderRecordSize;
 

@@ -33,8 +33,12 @@ void HelloVKRay::onLoad(SampleCallbacks* pSample, RenderContext* pRenderContext)
         mRtState->setMaxTraceRecursionDepth(3);
         mRtState->setProgram(mRtProgram);
 
-        mDescriptorSet = DescriptorSet::create(gpDevice->getCpuDescriptorPool(), mRtProgram->getGlobalRootSignature()->getDescriptorSet(0));
-        mDescriptorSet->setAccelerationStructure(0, 0, mRtScene->getTlas(mRtProgram->getHitProgramCount()));
+        mpGlobalVars = GraphicsVars::create(mRtProgram->getGlobalReflector(), true, mRtProgram->getGlobalRootSignature());
+        ParameterBlockReflection::BindLocation loc = mpGlobalVars->getReflection()->getDefaultParameterBlock()->getResourceBinding("gRtScene");
+        if (loc.setIndex != ProgramReflection::kInvalidLocation)
+        {
+            mpGlobalVars->getDefaultBlock()->setAccelerationStructure(loc, 0, mRtScene->getTlas(mRtProgram->getHitProgramCount()));
+        }
     }
 
     #if 0
@@ -107,8 +111,12 @@ void HelloVKRay::onFrameRender(SampleCallbacks* pSample, RenderContext* pRenderC
             width, height, depth);
     };
 
-    VkDescriptorSet set = mDescriptorSet->getApiHandle();
+    auto block = mpGlobalVars->getDefaultBlock();
+    block->prepareForDraw(pRenderContext);
+
+    VkDescriptorSet set = block->getRootSets().front().pSet->getApiHandle();
     vkCmdBindDescriptorSets(pRenderContext->getLowLevelData()->getCommandList(), VK_PIPELINE_BIND_POINT_RAY_TRACING_NV, mRtProgram->getGlobalRootSignature()->getApiHandle(), 0, 1, &set, 0, 0);
+
     raytrace(mRtState->getRtso()->getApiHandle(), mShaderBindingTable, mShaderRecordSize, mpRtOut->getWidth(), mpRtOut->getHeight(), 1);
 
     pRenderContext->blit(mpRtOut->getSRV(), pTargetFbo->getRenderTargetView(0));
@@ -127,7 +135,12 @@ bool HelloVKRay::onMouseEvent(SampleCallbacks* pSample, const MouseEvent& mouseE
 void HelloVKRay::onResizeSwapChain(SampleCallbacks* pSample, uint32_t width, uint32_t height)
 {
     mpRtOut = Texture::create2D(width, height, ResourceFormat::RGBA16Float, 1, 1, nullptr, Resource::BindFlags::UnorderedAccess | Resource::BindFlags::ShaderResource);
-    mDescriptorSet->setUav(1, 0, mpRtOut->getUAV().get());
+
+    ParameterBlockReflection::BindLocation loc = mpGlobalVars->getReflection()->getDefaultParameterBlock()->getResourceBinding("gOutput");
+    if (loc.setIndex != ProgramReflection::kInvalidLocation)
+    {
+        mpGlobalVars->getDefaultBlock()->setUav(loc, 0, mpRtOut->getUAV());
+    }
 }
 
 #ifdef _WIN32
