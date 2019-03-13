@@ -360,7 +360,8 @@ namespace Falcor
             RawBuffer,
             TypedBuffer,
             Sampler,
-            ConstantBuffer
+            ConstantBuffer,
+            AccelerationStructure
         };
         
         /** Create a new object

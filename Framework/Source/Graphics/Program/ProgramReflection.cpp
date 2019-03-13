@@ -79,6 +79,8 @@ namespace Falcor
                 return ReflectionResourceType::Type::RawBuffer;
             case SLANG_TEXTURE_BUFFER:
                 return ReflectionResourceType::Type::TypedBuffer;
+            case SLANG_ACCELERATION_STRUCTURE:
+                return ReflectionResourceType::Type::AccelerationStructure;
             default:
                 return ReflectionResourceType::Type::Texture;
             }
@@ -882,6 +884,13 @@ namespace Falcor
             break;
         case ReflectionResourceType::Type::TypedBuffer:
             d.setType = shaderAccess == ReflectionResourceType::ShaderAccess::Read ? ParameterBlockReflection::ResourceDesc::Type::TypedBufferSrv : ParameterBlockReflection::ResourceDesc::Type::TypedBufferUav;
+            break;
+        case ReflectionResourceType::Type::AccelerationStructure:
+#ifdef FALCOR_D3D12
+            d.setType = ParameterBlockReflection::ResourceDesc::Type::TextureSrv;
+#else
+            d.setType = ParameterBlockReflection::ResourceDesc::Type::AccelerationStructure;
+#endif
             break;
         default:
             should_not_get_here();
