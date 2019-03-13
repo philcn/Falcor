@@ -176,6 +176,7 @@ namespace Falcor
         */
         UnorderedAccessView::SharedPtr getUav(const BindLocation& bindLocation, uint32_t arrayIndex) const;
 
+#ifdef FALCOR_VK
         /** Bind an acceleration structure.
             \param[in] bindLocation The bind-location in the block
             \param[in] arrayIndex The array index, or 0 for non-arrays
@@ -189,6 +190,7 @@ namespace Falcor
             \return If the indices is valid, a shared pointer to the acceleration structure handle. Otherwise returns nullptr
         */
         AccelerationStructureHandle getAccelerationStructure(const BindLocation& bindLocation, uint32_t arrayIndex) const;
+#endif
 
         /** Bind a sampler to the program in the global namespace.
             \param[in] name The name of the sampler object in the shader
@@ -261,8 +263,10 @@ namespace Falcor
                 ConstantBuffer::SharedPtr      pCB;
                 ShaderResourceView::SharedPtr  pSRV;
                 UnorderedAccessView::SharedPtr pUAV;
-                Sampler::SharedPtr pSampler;
+                Sampler::SharedPtr             pSampler;
+#ifdef FALCOR_VK
                 AccelerationStructureHandle    pAS;
+#endif
             };
             size_t requiredSize = 0;
         };
