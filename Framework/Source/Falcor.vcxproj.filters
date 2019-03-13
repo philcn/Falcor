@@ -501,9 +501,6 @@
     <ClCompile Include="Experimental\Raytracing\RtProgramVars.cpp">
       <Filter>Experimental\Raytracing</Filter>
     </ClCompile>
-    <ClCompile Include="Experimental\Raytracing\RtProgramVarsHelper.cpp">
-      <Filter>Experimental\Raytracing</Filter>
-    </ClCompile>
     <ClCompile Include="Experimental\Raytracing\RtScene.cpp">
       <Filter>Experimental\Raytracing</Filter>
     </ClCompile>
@@ -596,6 +593,18 @@
       <Filter>Experimental\Raytracing\D3D12</Filter>
     </ClCompile>
     <ClCompile Include="Experimental\Raytracing\Vulkan\VkRtState.cpp">
+      <Filter>Experimental\Raytracing\Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="Experimental\Raytracing\Vulkan\VkRtProgramVars.cpp">
+      <Filter>Experimental\Raytracing\Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="Experimental\Raytracing\D3D12\D3D12RtProgramVars.cpp">
+      <Filter>Experimental\Raytracing\D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="Experimental\Raytracing\D3D12\D3D12RtVarsCmdList.cpp">
+      <Filter>Experimental\Raytracing\D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="Experimental\Raytracing\Vulkan\VkRtVarsCmdList.cpp">
       <Filter>Experimental\Raytracing\Vulkan</Filter>
     </ClCompile>
   </ItemGroup>
@@ -2071,9 +2080,6 @@
     <ClInclude Include="Experimental\Raytracing\RtProgramVars.h">
       <Filter>Experimental\Raytracing</Filter>
     </ClInclude>
-    <ClInclude Include="Experimental\Raytracing\RtProgramVarsHelper.h">
-      <Filter>Experimental\Raytracing</Filter>
-    </ClInclude>
     <ClInclude Include="Experimental\Raytracing\RtScene.h">
       <Filter>Experimental\Raytracing</Filter>
     </ClInclude>
@@ -2146,6 +2152,12 @@
     </ClInclude>
     <ClInclude Include="Experimental\Raytracing\D3D12\D3D12RtStateObjectHelper.h">
       <Filter>Experimental\Raytracing\D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="Experimental\Raytracing\D3D12\D3D12RtVarsCmdList.h">
+      <Filter>Experimental\Raytracing\D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="Experimental\Raytracing\Vulkan\VkRtVarsCmdList.h">
+      <Filter>Experimental\Raytracing\Vulkan</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

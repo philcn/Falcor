@@ -25,31 +25,34 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
-#pragma once
-
-// RenderGraph
-#include "Experimental/RenderGraph/RenderGraph.h"
-#include "Experimental/RenderGraph/RenderPass.h"
-#include "Experimental/RenderGraph/RenderGraphIR.h"
-#include "Experimental/RenderGraph/RenderGraphImportExport.h"
-#include "Experimental/RenderGraph/RenderGraphUI.h"
-
-// Render Passes
-#include "Experimental/RenderPasses/ForwardLightingPass.h"
-#include "Experimental/RenderPasses/BlitPass.h"
-#include "Experimental/RenderPasses/DepthPass.h"
-#include "Experimental/RenderGraph/RenderPassLibrary.h"
-#include "Experimental/RenderGraph/RenderGraphImportExport.h"
-
-// Raytracing
-#include "Experimental/Raytracing/RtModel.h"
-#include "Experimental/Raytracing/RtScene.h"
-#include "Experimental/Raytracing/RtShader.h"
-#include "Experimental/Raytracing/RtProgram/RtProgram.h"
-#include "Experimental/Raytracing/RtProgram/RtProgramVersion.h"
-#include "Experimental/Raytracing/RtProgram/SingleShaderProgram.h"
-#include "Experimental/Raytracing/RtProgram/HitProgram.h"
+#include "Framework.h"
+#include "API/Device.h"
 #include "Experimental/Raytracing/RtProgramVars.h"
-#include "Experimental/Raytracing/RtState.h"
 #include "Experimental/Raytracing/RtStateObject.h"
-#include "Experimental/Raytracing/RtSceneRenderer.h"
+#include "D3D12RtVarsCmdList.h"
+
+namespace Falcor
+{
+    uint32_t RtProgramVars::getProgramIdentifierSize()
+    {
+        return D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
+    }
+
+    bool RtProgramVars::applyRtProgramVars(uint8_t* pRecord, const RtProgramVersion* pProgVersion, const RtStateObject* pRtso, ProgramVars* pVars, RtVarsContext* pContext)
+    {
+        MAKE_SMART_COM_PTR(ID3D12StateObjectProperties);
+        ID3D12StateObjectPropertiesPtr pRtsoPtr = pRtso->getApiHandle();
+        memcpy(pRecord, pRtsoPtr->GetShaderIdentifier(pProgVersion->getExportName().c_str()), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
+        pRecord += D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
+        pContext->getRtVarsCmdList()->setRootParams(pProgVersion->getLocalRootSignature(), pRecord);
+        return pVars->applyProgramVarsCommon<true>(pContext, true);
+    }
+
+    void RtVarsContext::apiInit()
+    {
+        mpList = RtVarsCmdList::create();
+
+        ID3D12GraphicsCommandList* pList = mpList.get();
+        mpLowLevelData->setCommandList(pList);
+    }
+}

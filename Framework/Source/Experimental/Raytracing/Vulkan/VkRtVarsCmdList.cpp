@@ -25,31 +25,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
-#pragma once
+#include "Framework.h"
+#include "VkRtVarsCmdList.h"
 
-// RenderGraph
-#include "Experimental/RenderGraph/RenderGraph.h"
-#include "Experimental/RenderGraph/RenderPass.h"
-#include "Experimental/RenderGraph/RenderGraphIR.h"
-#include "Experimental/RenderGraph/RenderGraphImportExport.h"
-#include "Experimental/RenderGraph/RenderGraphUI.h"
-
-// Render Passes
-#include "Experimental/RenderPasses/ForwardLightingPass.h"
-#include "Experimental/RenderPasses/BlitPass.h"
-#include "Experimental/RenderPasses/DepthPass.h"
-#include "Experimental/RenderGraph/RenderPassLibrary.h"
-#include "Experimental/RenderGraph/RenderGraphImportExport.h"
-
-// Raytracing
-#include "Experimental/Raytracing/RtModel.h"
-#include "Experimental/Raytracing/RtScene.h"
-#include "Experimental/Raytracing/RtShader.h"
-#include "Experimental/Raytracing/RtProgram/RtProgram.h"
-#include "Experimental/Raytracing/RtProgram/RtProgramVersion.h"
-#include "Experimental/Raytracing/RtProgram/SingleShaderProgram.h"
-#include "Experimental/Raytracing/RtProgram/HitProgram.h"
-#include "Experimental/Raytracing/RtProgramVars.h"
-#include "Experimental/Raytracing/RtState.h"
-#include "Experimental/Raytracing/RtStateObject.h"
-#include "Experimental/Raytracing/RtSceneRenderer.h"
+namespace Falcor
+{
+}

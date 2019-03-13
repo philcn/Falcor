@@ -18,11 +18,7 @@ private:
     RtScene::SharedPtr mRtScene;
     RtProgram::SharedPtr mRtProgram;
     RtState::SharedPtr mRtState;
-
-    GraphicsVars::SharedPtr mpGlobalVars;
-
-    Buffer::SharedPtr mShaderBindingTable;
-    uint32_t mShaderRecordSize;
+    RtProgramVars::SharedPtr mRtVars;
 
     Texture::SharedPtr mpRtOut;
 };

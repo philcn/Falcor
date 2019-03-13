@@ -104,17 +104,16 @@ namespace Falcor
             }
         }
 
-
-        // Get the program identifier size
-        DeviceHandle pRtDevice = gpDevice->getApiHandle();
-
         // Create the shader-table buffer
         mHitRecordCount = recordCountPerHit * mHitProgCount;
         uint32_t numEntries = mMissProgCount + mHitRecordCount + 1; // 1 is for the ray-gen
 
         // Calculate the record size
-        mRecordSize = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + maxRootSigSize;
+        mProgramIdentifierSize = getProgramIdentifierSize();
+        mRecordSize = mProgramIdentifierSize + maxRootSigSize;
+#ifdef FALCOR_D3D12
         mRecordSize = align_to(D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT, mRecordSize); // We align to SHADER_TABLE_ALIGNMENT instead of SHADER_RECORD_ALIGNMENT because we pack all three tables in the same buffer
+#endif
         assert(mRecordSize != 0);
 
         // Create the buffer and allocate the temporary storage
@@ -163,16 +162,6 @@ namespace Falcor
         return mShaderTableData.data() + (recordIndex * mRecordSize);
     }
 
-    bool applyRtProgramVars(uint8_t* pRecord, const RtProgramVersion* pProgVersion, const RtStateObject* pRtso, ProgramVars* pVars, RtVarsContext* pContext)
-    {
-        MAKE_SMART_COM_PTR(ID3D12StateObjectProperties);
-        ID3D12StateObjectPropertiesPtr pRtsoPtr = pRtso->getApiHandle();
-        memcpy(pRecord, pRtsoPtr->GetShaderIdentifier(pProgVersion->getExportName().c_str()), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
-        pRecord += D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
-        pContext->getRtVarsCmdList()->setRootParams(pProgVersion->getLocalRootSignature(), pRecord);
-        return pVars->applyProgramVarsCommon<true>(pContext, true);
-    }
-
     bool RtProgramVars::apply(RenderContext* pCtx, RtStateObject* pRtso)
     {
         // We always have a ray-gen program, apply it first
@@ -218,5 +207,29 @@ namespace Falcor
 
         pCtx->updateBuffer(mpShaderTable.get(), mShaderTableData.data());
         return true;
+    }
+
+    RtVarsContext::SharedPtr RtVarsContext::create()
+    {
+        return SharedPtr(new RtVarsContext());
+    }
+
+    RtVarsContext::RtVarsContext()
+    {
+        mpLowLevelData = LowLevelContextData::create(LowLevelContextData::CommandQueueType::Direct, nullptr);
+
+        apiInit();
+    }
+
+    RtVarsContext::~RtVarsContext()
+    {
+        // Release the low-level data before the list
+        mpLowLevelData = nullptr;
+        mpList = nullptr;
+    }
+
+    void RtVarsContext::resourceBarrier(const Resource* pResource, Resource::State newState, const ResourceViewInfo* pViewInfo)
+    {
+        gpDevice->getRenderContext()->resourceBarrier(pResource, newState, pViewInfo);
     }
 }

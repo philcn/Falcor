@@ -30,12 +30,13 @@
 #include "RtScene.h"
 #include "API/Buffer.h"
 #include "Graphics/Program/ProgramVars.h"
-#include "RtProgramVarsHelper.h"
 
 namespace Falcor
 {
     class RenderContext;
     class RtStateObject;
+    class RtVarsCmdList;
+    class RtVarsContext;
 
     class RtProgramVars : public std::enable_shared_from_this<RtProgramVars>
     {
@@ -74,6 +75,7 @@ namespace Falcor
         RtProgramVars(RtProgram::SharedPtr pProgram, RtScene::SharedPtr pScene);
         RtProgram::SharedPtr mpProgram;
         RtScene::SharedPtr mpScene;
+        uint32_t mProgramIdentifierSize;
         uint32_t mRecordSize;
         Buffer::SharedPtr mpShaderTable;
 
@@ -82,12 +84,31 @@ namespace Falcor
         uint8_t* getHitRecordPtr(uint32_t hitId, uint32_t meshId);
 
         bool init();
+        uint32_t getProgramIdentifierSize();
+        bool applyRtProgramVars(uint8_t* pRecord, const RtProgramVersion* pProgVersion, const RtStateObject* pRtso, ProgramVars* pVars, RtVarsContext* pContext);
 
         GraphicsVars::SharedPtr mpGlobalVars;
         GraphicsVars::SharedPtr mRayGenVars;
         std::vector<VarsVector> mHitVars;
         std::vector<uint8_t> mShaderTableData;
         VarsVector mMissVars;
-        RtVarsContext::SharedPtr mpRtVarsHelper;
+        std::shared_ptr<RtVarsContext> mpRtVarsHelper;
+    };
+
+    class RtVarsContext : public CopyContext, inherit_shared_from_this<CopyContext, RtVarsContext>
+    {
+    public:
+        using SharedPtr = std::shared_ptr<RtVarsContext>;
+        ~RtVarsContext();
+
+        static SharedPtr create();
+
+        const LowLevelContextData::SharedPtr& getLowLevelData() const override { return mpLowLevelData; }
+        void resourceBarrier(const Resource* pResource, Resource::State newState, const ResourceViewInfo* pViewInfo = nullptr) override;
+        std::shared_ptr<RtVarsCmdList> getRtVarsCmdList() const { return mpList; }
+    private:
+        RtVarsContext();
+        void apiInit();
+        std::shared_ptr<RtVarsCmdList> mpList;
     };
 }
