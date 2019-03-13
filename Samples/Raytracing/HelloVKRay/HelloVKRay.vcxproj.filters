@@ -12,10 +12,7 @@
     <ClInclude Include="HelloVKRay.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Data\raytrace.slang">
-      <Filter>Data</Filter>
-    </None>
-    <None Include="Data\raytrace_test.slang">
+    <None Include="Data\HelloVKRay.slang">
       <Filter>Data</Filter>
     </None>
   </ItemGroup>

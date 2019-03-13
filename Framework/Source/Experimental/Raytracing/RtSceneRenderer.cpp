@@ -135,7 +135,11 @@ namespace Falcor
         if (loc.setIndex != ProgramReflection::kInvalidLocation)
         {
             RtScene* pRtScene = dynamic_cast<RtScene*>(mpScene.get());
+#ifdef FALCOR_VK
+            pVars->getDefaultBlock()->setAccelerationStructure(loc, 0, pRtScene->getTlas(pRtVars->getHitProgramsCount()));
+#else
             pVars->getDefaultBlock()->setSrv(loc, 0, pRtScene->getTlasSrv(pRtVars->getHitProgramsCount()));
+#endif
         }
 
         ConstantBuffer::SharedPtr pDxrPerFrame = pVars->getConstantBuffer("DxrPerFrame");

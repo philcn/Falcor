@@ -34,6 +34,7 @@ namespace Falcor
     VkDeviceMemory allocateDeviceMemory(Device::MemoryType memType, uint32_t memoryTypeBits, size_t size);
     VkMemoryRequirements getAccelerationStructureMemoryRequirements(VkAccelerationStructureNV handle, VkAccelerationStructureMemoryRequirementsTypeNV type);
 
+    // VKRayTODO: share common logic with D3D12 implementation
     std::vector<RtScene::VkGeometryInstance> RtScene::createInstanceDesc(const RtScene* pScene, uint32_t hitProgCount)
     {
         mGeometryCount = 0;
@@ -81,9 +82,8 @@ namespace Falcor
                         idesc.instanceId = uint32_t(instanceDesc.size());
                         idesc.mask = 0xff;
                         idesc.instanceOffset = 0;
-                        idesc.flags = 0; // D3D12_RAYTRACING_INSTANCE_FLAG_NONE
-                        // VKRayTODO: figure this out
-                        // idesc.InstanceContributionToHitGroupIndex = instanceContributionToHitGroupIndex;
+                        idesc.flags = 0;
+                        idesc.instanceOffset = instanceContributionToHitGroupIndex;
                         instanceContributionToHitGroupIndex += hitProgCount * blasData.meshCount;
 
                         const auto& pMaterial = pModel->getMeshInstance(blasData.meshBaseIndex, meshInstance)->getObject()->getMaterial();

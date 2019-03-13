@@ -14,6 +14,7 @@ void HelloVKRay::onLoad(SampleCallbacks* pSample, RenderContext* pRenderContext)
         logErrorAndExit("Device does not support raytracing!", true);
     }
 
+    // VKRayTODO: move this somewhere else
     initVKRtApi();
 
     {
@@ -21,7 +22,7 @@ void HelloVKRay::onLoad(SampleCallbacks* pSample, RenderContext* pRenderContext)
         mRtScene = RtScene::createFromModel(model);
 
         RtProgram::Desc programDesc;
-        programDesc.addShaderLibrary("Data/raytrace.slang");
+        programDesc.addShaderLibrary("Data/HelloVKRay.slang");
         programDesc.setRayGen("rayGen");
         programDesc.addHitGroup(0, "closestHit", "");
         programDesc.addMiss(0, "miss");
@@ -76,7 +77,7 @@ void HelloVKRay::onFrameRender(SampleCallbacks* pSample, RenderContext* pRenderC
 
     mRtVars->apply(pRenderContext, mRtState->getRtso().get());
 
-    // VkRayTODO: need to support bind root sets for ray tracing before we can remove this
+    // VKRayTODO: need to support bind root sets for ray tracing before we can remove this
     VkDescriptorSet set = mRtVars->getGlobalVars()->getDefaultBlock()->getRootSets().front().pSet->getApiHandle();
     vkCmdBindDescriptorSets(pRenderContext->getLowLevelData()->getCommandList(), VK_PIPELINE_BIND_POINT_RAY_TRACING_NV, mRtProgram->getGlobalRootSignature()->getApiHandle(), 0, 1, &set, 0, 0);
 

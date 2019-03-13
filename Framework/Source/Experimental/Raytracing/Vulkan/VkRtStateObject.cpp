@@ -97,9 +97,6 @@ namespace Falcor
 
         RootSignature* pRootSig = desc.mpGlobalRootSignature ? desc.mpGlobalRootSignature.get() : RootSignature::getEmpty().get();
 
-        // VkRayTODO:
-        // rtsoHelper.addShaderConfig(&exportName, 1, pProg->getMaxPayloadSize(), pProg->getMaxAttributesSize());
-
         VkRayTracingPipelineCreateInfoNV rayPipelineInfo;
         rayPipelineInfo.sType = VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_NV;
         rayPipelineInfo.pNext = nullptr;

@@ -358,8 +358,10 @@
     <ClCompile Include="Experimental\Raytracing\RtProgram\RtProgramVersion.cpp" />
     <ClCompile Include="Experimental\Raytracing\RtScene.cpp" />
     <ClCompile Include="Experimental\Raytracing\RtSceneRenderer.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugVK|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseVK|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugVK|x64'">
+      </ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseVK|x64'">
+      </ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="Experimental\Raytracing\RtShader.cpp" />
     <ClCompile Include="Experimental\Raytracing\RtState.cpp">
@@ -1031,8 +1033,10 @@
       </ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="Experimental\Raytracing\RtSceneRenderer.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugVK|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseVK|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugVK|x64'">
+      </ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseVK|x64'">
+      </ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="Experimental\Raytracing\RtShader.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugVK|x64'">false</ExcludedFromBuild>
