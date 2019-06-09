@@ -119,4 +119,9 @@ namespace Falcor
         resourceBarrier(pArgBuffer, Resource::State::IndirectArg);
         vkCmdDispatchIndirect(mpLowLevelData->getCommandList(), pArgBuffer->getApiHandle(), pArgBuffer->getGpuAddressOffset() + argBufferOffset);
     }
+
+    void ComputeContext::pushConstants(const std::shared_ptr<ProgramVars>& pVars, uint32_t size, void* pData)
+    {
+        vkCmdPushConstants(mpLowLevelData->getCommandList(), pVars->getRootSignature()->getApiHandle(), VK_SHADER_STAGE_ALL, 0, size, pData);
+    }
 }

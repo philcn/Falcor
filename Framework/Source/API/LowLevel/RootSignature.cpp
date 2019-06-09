@@ -111,6 +111,13 @@ namespace Falcor
         RootSignature::Desc d;
         for (uint32_t i = 0; i < pReflector->getParameterBlockCount(); i++)
         {
+#ifdef FALCOR_VK
+            if (pReflector->getParameterBlock(i)->hasPushConstants())
+            {
+                d.setPushConstants(pReflector->getParameterBlock(i)->getPushConstantsSize());
+            }
+#endif
+
             addParamBlockSets(pReflector->getParameterBlock(i).get(), d);
         }
 #ifdef FALCOR_D3D12

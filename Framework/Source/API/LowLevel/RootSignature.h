@@ -51,6 +51,11 @@ namespace Falcor
 #ifdef FALCOR_D3D12
             Desc& setLocal(bool isLocal) { mIsLocal = isLocal; return *this; }
 #endif
+#ifdef FALCOR_VK
+            void setPushConstants(uint32_t size) { mHasPushConstants = true; mPushConstantsSize = size; }
+            bool hasPushConstants() const { return mHasPushConstants; }
+            uint32_t getPushConstantsSize() const { return mPushConstantsSize; }
+#endif
             size_t getSetsCount() const { return mSets.size(); }
             const DescriptorSetLayout getSet(size_t index) const { return mSets[index]; }
         private:
@@ -58,6 +63,10 @@ namespace Falcor
             std::vector<DescriptorSetLayout> mSets;
 #ifdef FALCOR_D3D12
             bool mIsLocal = false;
+#endif
+#ifdef FALCOR_VK
+            bool mHasPushConstants = false;
+            uint32_t mPushConstantsSize = 0;
 #endif
         };
 

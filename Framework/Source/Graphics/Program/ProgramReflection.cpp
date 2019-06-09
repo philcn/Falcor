@@ -752,6 +752,12 @@ namespace Falcor
             bool storeVar = is_set(varMod, ReflectionVar::Modifier::Shared) ? is_set(scopeToReflect, ResourceScope::Global) : is_set(scopeToReflect, ResourceScope::Local);
             if (storeVar == false) continue;
 
+            if (pSlangLayout->getCategory() == ParameterCategory::PushConstantBuffer)
+            {
+                pDefaultBlock->setPushConstantsVar(pVar);
+                continue;
+            }
+
             if (pSlangLayout->getType()->unwrapArray()->getKind() == TypeReflection::Kind::ParameterBlock)
             {
                 std::string name = std::string(pSlangLayout->getName());
@@ -996,6 +1002,12 @@ namespace Falcor
             }
             flattenResources(pStruct, mResources);
         }
+    }
+
+    void ParameterBlockReflection::setPushConstantsVar(const ReflectionVar::SharedConstPtr& pVar)
+    {
+        assert(mpPushConstantsVar == nullptr); // Cannot have multiple push constants
+        mpPushConstantsVar = pVar;
     }
 
     void ParameterBlockReflection::finalize()

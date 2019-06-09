@@ -102,6 +102,11 @@ namespace Falcor
         /** Submit the command list
         */
         virtual void flush(bool wait = false) override;
+
+#ifdef FALCOR_VK
+        void pushConstants(const std::shared_ptr<ProgramVars>& pVars, uint32_t size, void* pData);
+#endif
+
     protected:
         ComputeContext();
         void prepareForDispatch();

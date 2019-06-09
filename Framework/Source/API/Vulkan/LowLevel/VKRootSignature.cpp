@@ -112,6 +112,18 @@ namespace Falcor
         pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
         pipelineLayoutInfo.pSetLayouts = vkSetLayouts.data();
         pipelineLayoutInfo.setLayoutCount = (uint32_t)vkSetLayouts.size();
+
+        if (mDesc.hasPushConstants())
+        {
+            VkPushConstantRange pushConstantInfo = {};
+            pushConstantInfo.stageFlags = VK_SHADER_STAGE_ALL;
+            pushConstantInfo.offset = 0;
+            pushConstantInfo.size = mDesc.getPushConstantsSize();
+
+            pipelineLayoutInfo.pushConstantRangeCount = 1;
+            pipelineLayoutInfo.pPushConstantRanges = &pushConstantInfo;
+        }
+
         VkPipelineLayout layout;
         vk_call(vkCreatePipelineLayout(gpDevice->getApiHandle(), &pipelineLayoutInfo, nullptr, &layout));
         mApiHandle = ApiHandle::create(layout, vkSetLayouts);

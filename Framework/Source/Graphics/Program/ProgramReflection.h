@@ -559,14 +559,20 @@ namespace Falcor
         /** Merge to reflection objects into a new one
         */
         static SharedPtr merge(const ParameterBlockReflection& first, const ParameterBlockReflection& second);
+
+        void setPushConstantsVar(const ReflectionVar::SharedConstPtr& pVar);
+        bool hasPushConstants() const { return mpPushConstantsVar != nullptr; }
+        uint32_t getPushConstantsSize() const { assert(hasPushConstants()); return (uint32_t)mpPushConstantsVar->getType()->getSize(); }
     private:
         friend class ProgramReflection;
         void addResource(const ReflectionVar::SharedConstPtr& pVar);
+        void addPushConstantsBlock(const ReflectionVar::SharedConstPtr& pVar);
         void finalize();
         ParameterBlockReflection(const std::string& name);
         ParameterBlockReflection(const ParameterBlockReflection&) = default;
         ResourceVec mResources;
         ReflectionStructType::SharedPtr mpResourceVars;
+        ReflectionVar::SharedConstPtr mpPushConstantsVar;
         std::string mName;
         std::unordered_map<std::string, BindLocation> mResourceBindings;
 
