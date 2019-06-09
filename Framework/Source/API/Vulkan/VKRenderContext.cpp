@@ -269,6 +269,14 @@ namespace Falcor
         endVkDraw(mpLowLevelData->getCommandList());
     }
 
+    void RenderContext::multiDrawIndexedIndirect(const Buffer* pArgBuffer, uint64_t argBufferOffset, uint32_t drawCount, uint32_t argBufferStride)
+    {
+        resourceBarrier(pArgBuffer, Resource::State::IndirectArg);
+        prepareForDraw();
+        vkCmdDrawIndexedIndirect(mpLowLevelData->getCommandList(), pArgBuffer->getApiHandle(), argBufferOffset + pArgBuffer->getGpuAddressOffset(), drawCount, argBufferStride);
+        endVkDraw(mpLowLevelData->getCommandList());
+    }
+
     void RenderContext::initDrawCommandSignatures()
     {
     }

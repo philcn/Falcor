@@ -146,6 +146,8 @@ namespace Falcor
         */
         void drawIndexedIndirect(const Buffer* pArgBuffer, uint64_t argBufferOffset);
 
+        void multiDrawIndexedIndirect(const Buffer* pArgBuffer, uint64_t argBufferOffset, uint32_t drawCount, uint32_t argBufferStride);
+
         /** Blits (low-level copy) an SRV into an RTV.
             \param[in] pSrc Source view to copy from
             \param[in] pDst Target view to copy to
