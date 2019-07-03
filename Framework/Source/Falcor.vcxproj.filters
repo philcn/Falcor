@@ -571,9 +571,6 @@
     <ClCompile Include="Experimental\Raytracing\Vulkan\VKRtModel.cpp">
       <Filter>Experimental\Raytracing\Vulkan</Filter>
     </ClCompile>
-    <ClCompile Include="Experimental\Raytracing\D3D12\D3D12RtModel.cpp">
-      <Filter>Experimental\Raytracing\D3D12</Filter>
-    </ClCompile>
     <ClCompile Include="Experimental\Raytracing\D3D12\D3D12RtScene.cpp">
       <Filter>Experimental\Raytracing\D3D12</Filter>
     </ClCompile>
@@ -601,11 +598,11 @@
     <ClCompile Include="Experimental\Raytracing\D3D12\D3D12RtProgramVars.cpp">
       <Filter>Experimental\Raytracing\D3D12</Filter>
     </ClCompile>
-    <ClCompile Include="Experimental\Raytracing\D3D12\D3D12RtVarsCmdList.cpp">
+    <ClCompile Include="Experimental\Raytracing\D3D12\D3D12RtModel.cpp">
       <Filter>Experimental\Raytracing\D3D12</Filter>
     </ClCompile>
-    <ClCompile Include="Experimental\Raytracing\Vulkan\VkRtVarsCmdList.cpp">
-      <Filter>Experimental\Raytracing\Vulkan</Filter>
+    <ClCompile Include="Experimental\Raytracing\D3D12\D3D12RtProgramVarsHelper.cpp">
+      <Filter>Experimental\Raytracing\D3D12</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -2153,10 +2150,10 @@
     <ClInclude Include="Experimental\Raytracing\D3D12\D3D12RtStateObjectHelper.h">
       <Filter>Experimental\Raytracing\D3D12</Filter>
     </ClInclude>
-    <ClInclude Include="Experimental\Raytracing\D3D12\D3D12RtVarsCmdList.h">
+    <ClInclude Include="Experimental\Raytracing\D3D12\D3D12RtProgramVarsHelper.h">
       <Filter>Experimental\Raytracing\D3D12</Filter>
     </ClInclude>
-    <ClInclude Include="Experimental\Raytracing\Vulkan\VkRtVarsCmdList.h">
+    <ClInclude Include="Experimental\Raytracing\Vulkan\VkRtProgramVarsHelper.h">
       <Filter>Experimental\Raytracing\Vulkan</Filter>
     </ClInclude>
   </ItemGroup>

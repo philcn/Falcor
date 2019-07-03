@@ -348,6 +348,14 @@ namespace Falcor
                 }
             }
         }
+        if (category == SLANG_PARAMETER_CATEGORY_SHADER_RECORD)
+        {
+            if (is_set(mod, ReflectionVar::Modifier::Shared))
+            {
+                logError("Shader record can't be shared");
+            }
+            mod |= ReflectionVar::Modifier::ShaderRecord;
+        }
         return mod;
     }
 

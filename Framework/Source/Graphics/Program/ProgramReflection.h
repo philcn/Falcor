@@ -431,8 +431,9 @@ namespace Falcor
 
         enum class Modifier
         {
-            None        = 0x0,    ///< No modifier
-            Shared      = 0x1,  ///< Shared resource
+            None            = 0x0,    ///< No modifier
+            Shared          = 0x1,    ///< Shared resource
+            ShaderRecord    = 0x2,    ///< Ray tracing shader record
         };
 
         /** Create a new object

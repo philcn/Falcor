@@ -61,8 +61,8 @@ namespace Falcor
         result.pNext = nullptr;
         result.stage = stage;
         result.module = mApiHandle;
-        // VKRayTODO: fixme
-        result.pName = "main";// mEntryPoint.c_str();
+        // This member has to be "main", regardless of the actual entry point of the shader
+        result.pName = "main";
         result.flags = 0;
         result.pSpecializationInfo = nullptr;
         return result;

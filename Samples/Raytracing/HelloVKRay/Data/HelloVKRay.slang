@@ -7,6 +7,13 @@ struct RayPayload
     float3 hitValue;
 };
 
+layout(shaderRecordNV)
+cbuffer ShaderRecord
+{
+    float4x4 pad;
+    float4 constColor;
+}
+
 #define gl_LaunchIDNV DispatchRaysIndex()
 #define gl_LaunchSizeNV DispatchRaysDimensions()
 
@@ -44,7 +51,7 @@ void rayGen()
 void closestHit(BuiltInTriangleIntersectionAttributes attribs, in out RayPayload payload)
 {
     float3 barycentrics = float3(1.0 - attribs.barycentrics.x - attribs.barycentrics.y, attribs.barycentrics.x, attribs.barycentrics.y);
-    payload.hitValue = barycentrics;
+    payload.hitValue = constColor.rgb;// barycentrics;
 }
 
 void miss(in out RayPayload payload)

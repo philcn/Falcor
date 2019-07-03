@@ -39,6 +39,9 @@ void HelloVKRay::onLoad(SampleCallbacks* pSample, RenderContext* pRenderContext)
         {
             mRtVars->getGlobalVars()->getDefaultBlock()->setAccelerationStructure(loc, 0, mRtScene->getTlas(mRtProgram->getHitProgramCount()));
         }
+
+        auto pBlock = mRtVars->getHitVars(0)[0]->getDefaultBlock();
+        pBlock->getConstantBuffer("ShaderRecord")["constColor"] = glm::vec4(0.5);
     }
 
     #if 0

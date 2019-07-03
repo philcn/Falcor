@@ -118,8 +118,11 @@ namespace Falcor
 
     bool RootSignature::apiInit()
     {
-        // VKRayTODO: required for local root parameters in shader binding table
         mSizeInBytes = 0;
+        if (mDesc.mIsLocal)
+        {
+            mSizeInBytes = mDesc.mSize;
+        }
 
         // Find the max set index
         uint32_t maxIndex = 0;

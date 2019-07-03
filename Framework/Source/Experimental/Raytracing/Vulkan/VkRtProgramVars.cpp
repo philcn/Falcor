@@ -29,7 +29,7 @@
 #include "API/Device.h"
 #include "Experimental/Raytracing/RtProgramVars.h"
 #include "Experimental/Raytracing/RtStateObject.h"
-#include "VkRtVarsCmdList.h"
+#include "VkRtProgramVarsHelper.h"
 
 namespace Falcor
 {
@@ -77,15 +77,43 @@ namespace Falcor
         vk_call(vkGetRayTracingShaderGroupHandlesNV(gpDevice->getApiHandle(), pRtso->getApiHandle(), groupID, 1, mProgramIdentifierSize, reinterpret_cast<void*>(pRecord)));
         pRecord += mProgramIdentifierSize;
 
+        // Sets the write head for the proxy command list to copy constants to
         pContext->getRtVarsCmdList()->setRootParams(pProgVersion->getLocalRootSignature(), pRecord);
-        return pVars->applyProgramVarsCommon<true>(pContext, true);
+
+        // The code below does the following:
+        //     pVars->applyProgramVarsCommon<true>(pContext, true);
+        // which is:
+        //     rootSets[s].pSet->bindForGraphics(pContext, mpRootSignature.get(), rootIndex);
+        // which is:
+        //     pCtx->getLowLevelData()->getCommandList()->SetGraphicsRootDescriptorTable(rootIndex, getGpuHandle(0));
+        //
+        // Since Vulkan ShaderRecord only supports embedded constants, the code copies the constants into the memory of the SBT
+        // instead of writing the descriptor table handle like D3D12.
+
+        assert(pVars->getParameterBlockCount() == 1);
+        ParameterBlock* pBlock = pVars->mParameterBlocks[0].pBlock.get();
+
+        if (pBlock->prepareForDraw(pContext) == false) return false;
+        pVars->mParameterBlocks[0].bind = false;
+
+        auto& rootSets = pBlock->getRootSets();
+        assert(rootSets.size() <= 1);
+
+        if (rootSets.size() > 0 && rootSets[0].dirty)
+        {
+            rootSets[0].dirty = false;
+
+            // Ugly, fixme
+            auto pCB = pBlock->getConstantBuffer(ParameterBlock::BindLocation(0, 0), 0);
+            pContext->getRtVarsCmdList()->setRootConstants(pCB->map(Buffer::MapType::Read), static_cast<uint32_t>(pCB->getSize()));
+            pCB->unmap();
+        }
+
+        return true;
     }
 
     void RtVarsContext::apiInit()
     {
         mpList = RtVarsCmdList::create();
-
-        // VKRayTODO: set proxy command list
-        // mpLowLevelData->setCommandList(mpList.get());
     }
 }

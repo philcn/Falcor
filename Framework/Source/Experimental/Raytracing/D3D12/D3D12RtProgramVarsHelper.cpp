@@ -26,7 +26,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 #include "Framework.h"
-#include "D3D12RtVarsCmdList.h"
+#include "D3D12RtProgramVarsHelper.h"
 #include "API/Device.h"
 #include "API/LowLevel/DescriptorPool.h"
 #include "API/D3D12/LowLevel/D3D12DescriptorData.h"

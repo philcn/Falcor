@@ -111,7 +111,9 @@ namespace Falcor
         // Calculate the record size
         mProgramIdentifierSize = getProgramIdentifierSize();
         mRecordSize = mProgramIdentifierSize + maxRootSigSize;
-#ifdef FALCOR_D3D12
+#ifdef FALCOR_VK
+        mRecordSize = align_to(16, mRecordSize); // VKRayTODO: replace magic number with macro
+#else
         mRecordSize = align_to(D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT, mRecordSize); // We align to SHADER_TABLE_ALIGNMENT instead of SHADER_RECORD_ALIGNMENT because we pack all three tables in the same buffer
 #endif
         assert(mRecordSize != 0);

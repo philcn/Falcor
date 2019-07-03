@@ -25,9 +25,23 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
-#include "Framework.h"
-#include "VkRtVarsCmdList.h"
+#pragma once
+#include "API/CopyContext.h"
+#include "API/LowLevel/RootSignature.h"
 
 namespace Falcor
 {
+    class RtVarsCmdList
+    {
+    public:
+        using SharedPtr = std::shared_ptr<RtVarsCmdList>;
+        static SharedPtr create() { return SharedPtr(new RtVarsCmdList); }
+        void setRootParams(RootSignature::SharedPtr pRoot, uint8_t* pBase) { mpRootBase = pBase; mpRootSignature = pRoot; }
+        void setRootConstants(const void* pData, uint32_t size) { memcpy(mpRootBase, pData, size); mpRootBase += size; }
+
+    private:
+        RtVarsCmdList() = default;
+        uint8_t* mpRootBase;
+        RootSignature::SharedPtr mpRootSignature;
+    };
 }
