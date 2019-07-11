@@ -1,7 +1,7 @@
 #include "HelloVKRay.h"
 
 static const glm::vec4 kClearColor(0.38f, 0.52f, 0.10f, 1);
-static const char* kDefaultScene = "teapot.obj";
+static const char* kDefaultScene = "Arcade/Arcade.fscene";
 
 void HelloVKRay::onGuiRender(SampleCallbacks* pSample, Gui* pGui)
 {
@@ -18,8 +18,7 @@ void HelloVKRay::onLoad(SampleCallbacks* pSample, RenderContext* pRenderContext)
     initVKRtApi();
 
     {
-        RtModel::SharedPtr model = RtModel::createFromFile(kDefaultScene, RtBuildFlags::None, Model::LoadFlags::None);
-        mRtScene = RtScene::createFromModel(model);
+        mRtScene = RtScene::loadFromFile(kDefaultScene, RtBuildFlags::None, Model::LoadFlags::RemoveInstancing);
 
         RtProgram::Desc programDesc;
         programDesc.addShaderLibrary("Data/HelloVKRay.slang");
@@ -34,6 +33,7 @@ void HelloVKRay::onLoad(SampleCallbacks* pSample, RenderContext* pRenderContext)
 
         mRtVars = RtProgramVars::create(mRtProgram, mRtScene);
 
+        // VKRayTODO: move this into VkRtSceneRenderer
         ParameterBlockReflection::BindLocation loc = mRtVars->getGlobalVars()->getReflection()->getDefaultParameterBlock()->getResourceBinding("gRtScene");
         if (loc.setIndex != ProgramReflection::kInvalidLocation)
         {
