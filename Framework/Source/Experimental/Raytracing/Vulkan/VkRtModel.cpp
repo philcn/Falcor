@@ -57,6 +57,7 @@ namespace Falcor
         RenderContext* pContext = gpDevice->getRenderContext();
 
         VkBuildAccelerationStructureFlagsNV vkRayFlags = getVKRayBuildFlags(mBuildFlags);
+        (void)vkRayFlags; // VKRayTODO: Actually use the variable
 
         // Create an AS for each mesh-group
         for (auto& blasData : mBottomLevelData)

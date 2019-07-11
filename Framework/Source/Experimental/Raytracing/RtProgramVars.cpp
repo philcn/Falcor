@@ -202,7 +202,12 @@ namespace Falcor
             }
         }
 
+#ifdef FALCOR_VK
+        // Don't need to bind root signature in Vulkan; avoid template linking problem
+        if (!mpGlobalVars->apply(pCtx, false))
+#else
         if (!mpGlobalVars->applyProgramVarsCommon<false>(pCtx, true))
+#endif
         {
             return false;
         }

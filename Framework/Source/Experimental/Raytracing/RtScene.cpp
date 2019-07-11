@@ -41,7 +41,6 @@ namespace Falcor
             pRtScene = nullptr;
         }
 
-        int count = 0;
         for (auto& path : pRtScene->mpPaths)
         {
             for (uint32_t objIdx = 0u; objIdx < path->getAttachedObjectCount(); objIdx++)
@@ -107,7 +106,6 @@ namespace Falcor
             Scene::addModelInstance(pRtInstance);
 
             // any paths attached to this ModelInstance need to be updated
-            int count = 0;
             auto pMovable = std::dynamic_pointer_cast<IMovableObject>(pInstance);
             auto pRtMovable = std::dynamic_pointer_cast<IMovableObject>(pRtInstance);
 

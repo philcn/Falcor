@@ -95,7 +95,7 @@ namespace Falcor
         std::shared_ptr<RtVarsContext> mpRtVarsHelper;
     };
 
-    class RtVarsContext : public CopyContext, inherit_shared_from_this<CopyContext, RtVarsContext>
+    class RtVarsContext : public CopyContext, public inherit_shared_from_this<CopyContext, RtVarsContext>
     {
     public:
         using SharedPtr = std::shared_ptr<RtVarsContext>;

@@ -31,6 +31,7 @@
 #include "API/RenderContext.h"
 #include "API/LowLevel/LowLevelContextData.h"
 #include "API/VAO.h"
+#include <list>
 
 namespace Falcor
 {
@@ -66,7 +67,7 @@ namespace Falcor
             {
                 bool handled = false;
                 // Find the insert location. Should have a single instance and the matrix should match
-                for (auto& it = staticMeshes.begin(); it != staticMeshes.end(); it++)
+                for (auto it = staticMeshes.begin(); it != staticMeshes.end(); it++)
                 {
                     if (it->size() > 1) break;
                     if ((*it)[0]->getTransformMatrix() == instanceList[0]->getTransformMatrix())

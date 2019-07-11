@@ -34,7 +34,7 @@ namespace Falcor
     class RtProgramVars;
     class RtState;
 
-    class RtSceneRenderer : public SceneRenderer, inherit_shared_from_this<SceneRenderer, RtSceneRenderer>
+    class RtSceneRenderer : public SceneRenderer, public inherit_shared_from_this<SceneRenderer, RtSceneRenderer>
     {
     public:
         using SharedPtr = std::shared_ptr<RtSceneRenderer>;

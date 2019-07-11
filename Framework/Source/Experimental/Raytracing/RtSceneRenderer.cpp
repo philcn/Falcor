@@ -199,7 +199,6 @@ namespace Falcor
                 {
                     for (data.mesh = 0; data.mesh < pModel->getMeshCount(); data.mesh++)
                     {
-                        const Mesh* pMesh = pModel->getMesh(data.mesh).get();
                         for (data.meshInstance = 0; data.meshInstance < pModel->getMeshInstanceCount(data.mesh); data.meshInstance++)
                         {
                             setHitShaderData(pRtVars.get(), data);

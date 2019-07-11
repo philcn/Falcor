@@ -154,6 +154,7 @@ namespace Falcor
         mRtFlags |= RtBuildFlags::AllowUpdate;
 
         VkBuildAccelerationStructureFlagsNV vkRayFlags = getVKRayBuildFlags(mRtFlags);
+        (void)vkRayFlags; // VKRayTODO: Actually use the variable
 
         RenderContext* pContext = gpDevice->getRenderContext();
         std::vector<VkGeometryInstance> instanceDesc = createInstanceDesc(this, hitProgCount);

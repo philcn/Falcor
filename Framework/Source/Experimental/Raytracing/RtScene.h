@@ -32,7 +32,7 @@
 
 namespace Falcor
 {
-    class RtScene : public Scene, inherit_shared_from_this<Scene, RtScene>
+    class RtScene : public Scene, public inherit_shared_from_this<Scene, RtScene>
     {
     public:
         using SharedPtr = std::shared_ptr<RtScene>;

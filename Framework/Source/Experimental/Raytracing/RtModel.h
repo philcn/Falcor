@@ -30,7 +30,7 @@
 
 namespace Falcor
 {
-    class RtModel : public Model, inherit_shared_from_this<Model, RtModel>
+    class RtModel : public Model, public inherit_shared_from_this<Model, RtModel>
     {
     public:
         using SharedPtr = std::shared_ptr<RtModel>;
