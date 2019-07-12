@@ -281,10 +281,6 @@ namespace Falcor
 
         template<bool forGraphics>
         bool bindRootSetsCommon(CopyContext* pContext, bool bindRootSig);
-
-#ifdef FALCOR_VK
-        friend class RtProgramVars;
-#endif
     };
 
     class GraphicsVars : public ProgramVars, public std::enable_shared_from_this<GraphicsVars>

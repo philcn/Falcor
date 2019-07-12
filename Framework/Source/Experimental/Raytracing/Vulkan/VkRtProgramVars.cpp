@@ -80,33 +80,17 @@ namespace Falcor
         // Sets the write head for the proxy command list to copy constants to
         pContext->getRtVarsCmdList()->setRootParams(pProgVersion->getLocalRootSignature(), pRecord);
 
-        // The code below does the following:
-        //     pVars->applyProgramVarsCommon<true>(pContext, true);
-        // which is:
-        //     rootSets[s].pSet->bindForGraphics(pContext, mpRootSignature.get(), rootIndex);
-        // which is:
-        //     pCtx->getLowLevelData()->getCommandList()->SetGraphicsRootDescriptorTable(rootIndex, getGpuHandle(0));
-        //
-        // Since Vulkan ShaderRecord only supports embedded constants, the code copies the constants into the memory of the SBT
-        // instead of writing the descriptor table handle like D3D12.
-
+        // Should only have one parameter block and one root set
         assert(pVars->getParameterBlockCount() == 1);
-        ParameterBlock* pBlock = pVars->mParameterBlocks[0].pBlock.get();
+        ParameterBlock* pBlock = const_cast<ParameterBlock*>(pVars->getParameterBlock(0).get());
 
-        if (pBlock->prepareForDraw(pContext) == false) return false;
-        pVars->mParameterBlocks[0].bind = false;
-
-        auto& rootSets = pBlock->getRootSets();
-        assert(rootSets.size() <= 1);
-
-        if (rootSets.size() > 0 && rootSets[0].dirty)
+        // Grab the shader record constant buffer, We don't care about the descriptor set
+        auto pCB = pBlock->getConstantBuffer(ParameterBlock::BindLocation(0, 0), 0);
+        if (pCB)
         {
-            rootSets[0].dirty = false;
-
-            // Ugly, fixme
-            auto pCB = pBlock->getConstantBuffer(ParameterBlock::BindLocation(0, 0), 0);
-            pContext->getRtVarsCmdList()->setRootConstants(pCB->map(Buffer::MapType::Read), static_cast<uint32_t>(pCB->getSize()));
-            pCB->unmap();
+            // Since Vulkan ShaderRecord only supports embedded constants, copy the constants into the memory of the SBT
+            // instead of writing the descriptor table handle like D3D12 does.
+            pContext->getRtVarsCmdList()->setRootConstants(pCB->getData().data(), static_cast<uint32_t>(pCB->getSize()));
         }
 
         return true;
