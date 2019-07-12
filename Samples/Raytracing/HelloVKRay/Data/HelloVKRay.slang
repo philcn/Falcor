@@ -1,60 +1,88 @@
+/***************************************************************************
+# Copyright (c) 2018, NVIDIA CORPORATION. All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#  * Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+#  * Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#  * Neither the name of NVIDIA CORPORATION nor the names of its
+#    contributors may be used to endorse or promote products derived
+#    from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS ``AS IS'' AND ANY
+# EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+# CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+# OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+***************************************************************************/
+
+// Must be in global root signature; Vulkan raytracing doesn't support SRV in shader record
+shared RWTexture2D<float4> gOutput;
+
 shared RaytracingAccelerationStructure gRtScene;
 
-shared layout(rgba8) RWTexture2D<float4> gOutput;
-
-struct RayPayload
+shared cbuffer PerFrameCB
 {
-    float3 hitValue;
+    float4x4 invView;
+    float4x4 invModel;
+    float2 viewportDims;
+    float tanHalfFovY;
 };
 
-layout(shaderRecordNV)
-cbuffer ShaderRecord
+struct PrimaryRayData
 {
-    float4x4 pad;
-    float4 constColor;
-}
+    float3 color;
+};
 
-#define gl_LaunchIDNV DispatchRaysIndex()
-#define gl_LaunchSizeNV DispatchRaysDimensions()
+layout(shaderRecordNV) cbuffer ShaderRecord
+{
+    float4x4 pad; // Test ShaderRecord size calculation and alignment
+    float3 gInstanceColor;
+}
 
 void rayGen() 
 {
-    const float2 pixelCenter = float2(gl_LaunchIDNV.xy) + float2(0.5);
-    const float2 inUV = pixelCenter / float2(gl_LaunchSizeNV.xy);
-
-    float2 d = inUV * 2.0 - 1.0;
-    float aspectRatio = float(gl_LaunchSizeNV.x) / float(gl_LaunchSizeNV.y);
+    uint3 launchIndex = DispatchRaysIndex();
+    float2 d = (((launchIndex.xy + 0.5) / viewportDims) * 2.f - 1.f);
+    float aspectRatio = viewportDims.x / viewportDims.y;
 
     RayDesc ray;
-    ray.Origin = float3(0, 0, -2.0);
-    ray.TMin = 0.001;
-    ray.Direction = normalize(float3(d.x * aspectRatio, -d.y, 1));
-    ray.TMax = 100.0;
+    ray.Origin = invView[3].xyz;
+        
+    // We negate the Z exis because the 'view' matrix is generated using a 
+    // Right Handed coordinate system with Z pointing towards the viewer
+    // The negation of Z axis is needed to get the rays go out in the direction away fromt he viewer.
+    // The negation of Y axis is needed because the texel coordinate system, used in the UAV we write into using launchIndex
+    // has the Y axis flipped with respect to the camera Y axis (0 is at the top and 1 at the bottom)
+    ray.Direction = normalize( (d.x * invView[0].xyz * tanHalfFovY * aspectRatio) - (d.y * invView[1].xyz * tanHalfFovY) - invView[2].xyz );
 
-    RayPayload payload;
+    ray.TMin = 0;
+    ray.TMax = 100000;
 
-    TraceRay
-    (
-        gRtScene,
-        0, // ray flags; gl_RayFlagsOpaqueNV
-        0xff, // cull mask
-        0, // sbt record offset
-        0, // sbt record stride
-        0, // missIndex
-        ray,
-        payload
-    );
-
-    gOutput[int2(gl_LaunchIDNV.xy)] = float4(payload.hitValue, 1.0);
+    PrimaryRayData payload;
+    TraceRay( gRtScene, 0 /* ray flags */, 0xFF, 0 /* ray index */, 0 /* sbt stride */, 0 /* miss index */, ray, payload );
+    gOutput[launchIndex.xy] = float4(payload.color, 1.0);
 }
 
-void closestHit(BuiltInTriangleIntersectionAttributes attribs, in out RayPayload payload)
+void closestHit(BuiltInTriangleIntersectionAttributes attribs, in out PrimaryRayData payload)
 {
     float3 barycentrics = float3(1.0 - attribs.barycentrics.x - attribs.barycentrics.y, attribs.barycentrics.x, attribs.barycentrics.y);
-    payload.hitValue = constColor.rgb;// barycentrics;
+
+    payload.color = gInstanceColor.rgb * barycentrics;
+    // payload.color = float3(InstanceIndex() / 10.0, PrimitiveIndex() / 10000.0, 1.0);
 }
 
-void miss(in out RayPayload payload)
+void miss(in out PrimaryRayData payload)
 {
-    payload.hitValue = float3(0.0, 0.1, 0.3);
+    payload.color = float3(0.0, 0.1, 0.3);
 }
