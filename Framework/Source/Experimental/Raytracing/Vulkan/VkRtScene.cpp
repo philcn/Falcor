@@ -81,7 +81,6 @@ namespace Falcor
                     {
                         idesc.instanceId = uint32_t(instanceDesc.size());
                         idesc.mask = 0xff;
-                        idesc.instanceOffset = 0;
                         idesc.flags = 0;
                         idesc.instanceOffset = instanceContributionToHitGroupIndex;
                         instanceContributionToHitGroupIndex += hitProgCount * blasData.meshCount;

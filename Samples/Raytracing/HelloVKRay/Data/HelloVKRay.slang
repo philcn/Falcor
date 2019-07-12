@@ -31,6 +31,15 @@ shared RWTexture2D<float4> gOutput;
 
 shared RaytracingAccelerationStructure gRtScene;
 
+// shared Buffer<uint3> gIndices[]; // VKRayTODO: Should be using unbounded array of Buffer
+
+// Temp workaround
+// Using StructuredBuffer will return all 0's
+// Using uint3 and float3 will result in wrong indexing caused by alignment
+shared RWStructuredBuffer<uint> gIndices[7];
+shared RWStructuredBuffer<float> gPositions[7];
+shared RWStructuredBuffer<float> gNormals[7];
+
 shared cbuffer PerFrameCB
 {
     float4x4 invView;
@@ -48,6 +57,7 @@ layout(shaderRecordNV) cbuffer ShaderRecord
 {
     float4x4 pad; // Test ShaderRecord size calculation and alignment
     float3 gInstanceColor;
+    uint gGeometryID;
 }
 
 void rayGen() 
@@ -70,16 +80,54 @@ void rayGen()
     ray.TMax = 100000;
 
     PrimaryRayData payload;
-    TraceRay( gRtScene, 0 /* ray flags */, 0xFF, 0 /* ray index */, 0 /* sbt stride */, 0 /* miss index */, ray, payload );
+    TraceRay( gRtScene, 0 /* ray flags */, 0xFF, 0 /* ray index */, 1 /* geometry contribution */, 0 /* miss index */, ray, payload );
     gOutput[launchIndex.xy] = float4(payload.color, 1.0);
+}
+
+float3 loadFloat3(RWStructuredBuffer<float> buffer, uint index)
+{
+    float3 v = 0.0;
+    v[0] = buffer[index * 3];
+    v[1] = buffer[index * 3 + 1];
+    v[2] = buffer[index * 3 + 2];
+
+    return v;
 }
 
 void closestHit(BuiltInTriangleIntersectionAttributes attribs, in out PrimaryRayData payload)
 {
     float3 barycentrics = float3(1.0 - attribs.barycentrics.x - attribs.barycentrics.y, attribs.barycentrics.x, attribs.barycentrics.y);
 
-    payload.color = gInstanceColor.rgb * barycentrics;
-    // payload.color = float3(InstanceIndex() / 10.0, PrimitiveIndex() / 10000.0, 1.0);
+    uint indices[3];
+    indices[0] = gIndices[NonUniformResourceIndex(gGeometryID)][PrimitiveIndex() * 3];
+    indices[1] = gIndices[NonUniformResourceIndex(gGeometryID)][PrimitiveIndex() * 3 + 1];
+    indices[2] = gIndices[NonUniformResourceIndex(gGeometryID)][PrimitiveIndex() * 3 + 2];
+
+    float3 p[3];
+    p[0] = loadFloat3(gPositions[NonUniformResourceIndex(gGeometryID)], indices[0]);
+    p[1] = loadFloat3(gPositions[NonUniformResourceIndex(gGeometryID)], indices[1]);
+    p[2] = loadFloat3(gPositions[NonUniformResourceIndex(gGeometryID)], indices[2]);
+
+    float3 n[3];
+    n[0] = loadFloat3(gNormals[NonUniformResourceIndex(gGeometryID)], indices[0]);
+    n[1] = loadFloat3(gNormals[NonUniformResourceIndex(gGeometryID)], indices[1]);
+    n[2] = loadFloat3(gNormals[NonUniformResourceIndex(gGeometryID)], indices[2]);
+
+    float3 position = 0.0;
+    float3 normal = 0.0;
+
+    for (int i = 0; i < 3; ++i)
+    {
+        position += p[i] * barycentrics[i];
+        normal += n[i] * barycentrics[i];
+    }
+
+    // payload.color = float3(indices) / 1000.0f;
+    // payload.color = position / 100.0f;
+    payload.color = normal * 0.5 + 0.5;
+
+    // payload.color = gInstanceColor.rgb;
+    // payload.color = barycentrics;
 }
 
 void miss(in out PrimaryRayData payload)
