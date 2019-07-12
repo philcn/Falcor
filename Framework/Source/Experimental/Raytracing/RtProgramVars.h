@@ -51,7 +51,7 @@ namespace Falcor
         VarsVector& getHitVars(uint32_t rayID) { return mHitVars[rayID]; }
         const GraphicsVars::SharedPtr& getRayGenVars() { return mRayGenVars; }
         const GraphicsVars::SharedPtr& getMissVars(uint32_t rayID) { return mMissVars[rayID]; }
-        const GraphicsVars::SharedPtr& getGlobalVars() { return mpGlobalVars; }
+        const RaytracingVars::SharedPtr& getGlobalVars() { return mpGlobalVars; }
 
         bool apply(RenderContext* pCtx, RtStateObject* pRtso);
 
@@ -87,7 +87,7 @@ namespace Falcor
         uint32_t getProgramIdentifierSize();
         bool applyRtProgramVars(uint8_t* pRecord, const RtProgramVersion* pProgVersion, const RtStateObject* pRtso, ProgramVars* pVars, RtVarsContext* pContext);
 
-        GraphicsVars::SharedPtr mpGlobalVars;
+        RaytracingVars::SharedPtr mpGlobalVars;
         GraphicsVars::SharedPtr mRayGenVars;
         std::vector<VarsVector> mHitVars;
         std::vector<uint8_t> mShaderTableData;

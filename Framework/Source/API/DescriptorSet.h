@@ -111,6 +111,9 @@ namespace Falcor
 
         void bindForGraphics(CopyContext* pCtx, const RootSignature* pRootSig, uint32_t rootIndex);
         void bindForCompute(CopyContext* pCtx, const RootSignature* pRootSig, uint32_t rootIndex);
+#ifdef FALCOR_VK
+        void bindForRaytracing(CopyContext* pCtx, const RootSignature* pRootSig, uint32_t rootIndex);
+#endif
     private:
         using ApiData = DescriptorSetApiData;
         DescriptorSet(DescriptorPool::SharedPtr pPool, const Layout& layout) : mpPool(pPool), mLayout(layout) {}

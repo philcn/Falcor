@@ -124,7 +124,7 @@ namespace Falcor
         mShaderTableData.resize(mpShaderTable->getSize());
 
         // Create the global variables
-        mpGlobalVars = GraphicsVars::create(mpProgram->getGlobalReflector(), true, mpProgram->getGlobalRootSignature());
+        mpGlobalVars = RaytracingVars::create(mpProgram->getGlobalReflector(), true, mpProgram->getGlobalRootSignature());
 
         return true;
     }
@@ -202,12 +202,7 @@ namespace Falcor
             }
         }
 
-#ifdef FALCOR_VK
-        // Don't need to bind root signature in Vulkan; avoid template linking problem
-        if (!mpGlobalVars->apply(pCtx, false))
-#else
-        if (!mpGlobalVars->applyProgramVarsCommon<false>(pCtx, true))
-#endif
+        if (!mpGlobalVars->apply(pCtx, true))
         {
             return false;
         }
