@@ -72,10 +72,71 @@ namespace Falcor
         }
     }
 
-    bool RtSceneRenderer::setPerMaterialData(const CurrentWorkingData& currentData, const Material* pMaterial)
+    void RtSceneRenderer::setGeometryMaterialData(RtProgramVars* pRtVars, const Material* pMaterial, uint32_t geometryID)
     {
-        // VKRayTODO: Bind material
-        return true;
+        if (mMaterialResourceLocations.baseColor.setIndex == ProgramReflection::BindLocation::kInvalidLocation)
+        {
+            auto pBlockReflection = pRtVars->getGlobalVars()->getReflection()->getParameterBlock("gRtMaterials");
+            mMaterialResourceLocations.baseColor = pBlockReflection->getResourceBinding("baseColor");
+            mMaterialResourceLocations.specular = pBlockReflection->getResourceBinding("specular");
+            mMaterialResourceLocations.emissive = pBlockReflection->getResourceBinding("emissive");
+            mMaterialResourceLocations.normalMap = pBlockReflection->getResourceBinding("normalMap");
+            mMaterialResourceLocations.occlusionMap = pBlockReflection->getResourceBinding("occlusionMap");
+            mMaterialResourceLocations.lightMap = pBlockReflection->getResourceBinding("lightMap");
+            mMaterialResourceLocations.heightMap = pBlockReflection->getResourceBinding("heightMap");
+            mMaterialResourceLocations.samplerState = pBlockReflection->getResourceBinding("samplerState");
+        }
+
+        if (!mpMaterialBlock)
+        {
+            RtScene* pScene = dynamic_cast<RtScene*>(mpScene.get());
+            uint32_t geometryCount = pScene->getGeometryCount(pRtVars->getHitProgramsCount()); // VKRayTODO: Recreate buffer when geometry count changes
+
+            auto pProgramReflection = pRtVars->getGlobalVars()->getReflection();
+            auto pBlockReflection = pProgramReflection->getParameterBlock("gRtMaterials");
+            auto pStructuredBufferReflection = std::dynamic_pointer_cast<const ReflectionResourceType>(pBlockReflection->getResource("constants")->getType());
+
+            mpMaterialConstantsBuffer = StructuredBuffer::create("MaterialConstants", pStructuredBufferReflection, geometryCount);
+
+            mpMaterialBlock = ParameterBlock::create(pBlockReflection, false);
+            mpMaterialBlock->setStructuredBuffer("constants", mpMaterialConstantsBuffer);
+        }
+
+        mpMaterialBlock->setSrv(mMaterialResourceLocations.baseColor, geometryID, pMaterial->getBaseColorTexture() ? pMaterial->getBaseColorTexture()->getSRV() : ShaderResourceView::getNullView());
+        mpMaterialBlock->setSrv(mMaterialResourceLocations.specular, geometryID, pMaterial->getSpecularTexture() ? pMaterial->getSpecularTexture()->getSRV() : ShaderResourceView::getNullView());
+        mpMaterialBlock->setSrv(mMaterialResourceLocations.emissive, geometryID, pMaterial->getEmissiveTexture() ? pMaterial->getEmissiveTexture()->getSRV() : ShaderResourceView::getNullView());
+        mpMaterialBlock->setSrv(mMaterialResourceLocations.normalMap, geometryID, pMaterial->getNormalMap() ? pMaterial->getNormalMap()->getSRV() : ShaderResourceView::getNullView());
+        mpMaterialBlock->setSrv(mMaterialResourceLocations.occlusionMap, geometryID, pMaterial->getOcclusionMap() ? pMaterial->getOcclusionMap()->getSRV() : ShaderResourceView::getNullView());
+        mpMaterialBlock->setSrv(mMaterialResourceLocations.lightMap, geometryID, pMaterial->getLightMap() ? pMaterial->getLightMap()->getSRV() : ShaderResourceView::getNullView());
+        mpMaterialBlock->setSrv(mMaterialResourceLocations.heightMap, geometryID, pMaterial->getHeightMap() ? pMaterial->getHeightMap()->getSRV() : ShaderResourceView::getNullView());
+        mpMaterialBlock->setSampler(mMaterialResourceLocations.samplerState, geometryID, pMaterial->getSampler());
+
+        struct MaterialConstants
+        {
+            float4 baseColor;
+            float4 specular;
+            float3 emissive;
+            float padf;
+            float alphaThreshold;
+            float IoR;
+            uint32_t id;
+            uint32_t flags;
+            float2 heightScaleOffset;
+            float2 pad;
+        };
+
+        MaterialConstants constants = {};
+        constants.baseColor = pMaterial->getBaseColor();
+        constants.specular = pMaterial->getSpecularParams();
+        constants.emissive = pMaterial->getEmissiveColor();
+        constants.alphaThreshold = pMaterial->getAlphaThreshold();
+        constants.IoR = pMaterial->getIndexOfRefraction();
+        constants.flags = pMaterial->getFlags();
+        constants.heightScaleOffset = float2(pMaterial->getHeightScale(), pMaterial->getHeightOffset());
+
+        mpMaterialConstantsBuffer->setBlob(&constants, geometryID * sizeof(MaterialConstants), sizeof(MaterialConstants));
+
+        pRtVars->getGlobalVars()->setParameterBlock("gRtMaterials", mpMaterialBlock);
     }
 
     bool RtSceneRenderer::setPerModelData(const CurrentWorkingData& currentData)

@@ -58,11 +58,12 @@ namespace Falcor
             setPerMeshInstanceData(data.currentData, pModelInstance, pMeshInstance, instanceId);
             // For Vulkan, mesh buffers are global descriptor arrays
             bindMeshBuffers(pMesh->getVao().get(), pRtVars->getGlobalVars().get(), instanceId);
+            setGeometryMaterialData(pRtVars, pMesh->getMaterial().get(), instanceId);
 #else
             setPerMeshInstanceData(data.currentData, pModelInstance, pMeshInstance, 0);
             bindMeshBuffers(pMesh->getVao().get(), data.currentData.pVars, 0);
-#endif
             setPerMaterialData(data.currentData, pMesh->getMaterial().get());
+#endif
         }
     }
 

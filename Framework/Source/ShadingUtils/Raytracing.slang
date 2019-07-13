@@ -31,6 +31,8 @@
 __exported __import Shading;
 __exported __import DefaultVS;
 
+#include "HostDeviceData.h"
+
 // If defined, hit position is computed by barycentric interpolation of the vertex positions. 
 // Otherwise it is computed based on the ray equation in world space: p=o+t*d, which is numerically unstable.
 // Unfortunately, interpolating the position incurs the extra cost of fetching 3x12B positions and one matrix multiply.
@@ -41,7 +43,7 @@ shared cbuffer DxrPerFrame : register(b13)
     uint hitProgramCount;
 };
 
-#ifdef FALCOR_D3D12
+#ifndef FALCOR_VK
 
 ByteAddressBuffer gIndices       : register(t50);
 ByteAddressBuffer gTexCrds       : register(t51);
@@ -183,13 +185,46 @@ layout(shaderRecordNV) cbuffer InternalShaderRecord
     uint gGeometryID;
 };
 
+struct MaterialConstants
+{
+    float4 baseColor;
+    float4 specular;
+    float3 emissive;
+    float padf;
+    float alphaThreshold;
+    float IoR;
+    uint32_t id;
+    uint32_t flags;
+    float2 heightScaleOffset;
+    float2 pad;
+};
+
+struct MaterialTextures
+{
+    Texture2D baseColor[RT_GEOMETRY_COUNT];
+    Texture2D specular[RT_GEOMETRY_COUNT];
+    Texture2D emissive[RT_GEOMETRY_COUNT];
+    Texture2D normalMap[RT_GEOMETRY_COUNT];
+
+    Texture2D occlusionMap[RT_GEOMETRY_COUNT];
+    Texture2D lightMap[RT_GEOMETRY_COUNT];
+    Texture2D heightMap[RT_GEOMETRY_COUNT];
+    SamplerState samplerState[RT_GEOMETRY_COUNT];
+
+    RWStructuredBuffer<MaterialConstants> constants;
+};
+
+// Replace gMaterial
+shared ParameterBlock<MaterialTextures> gRtMaterials;
+
 #define bindless(descArray) (descArray[NonUniformResourceIndex(gGeometryID)])
 
 float2 loadFloat2(RWStructuredBuffer<float> buffer, uint index)
 {
     float2 v = 0.0;
-    v[0] = buffer[index * 2];
-    v[1] = buffer[index * 2 + 1];
+    // VKRayTODO: Find out why stride needs to be 3
+    v[0] = buffer[index * 3];
+    v[1] = buffer[index * 3 + 1];
 
     return v;
 }
@@ -315,6 +350,104 @@ float3 getPrevPosW(uint triangleIndex, float3 barycentrics)
     }
 
     return mul(float4(prevPos, 1.f), gPrevWorldMatLocal).xyz;
+}
+
+/** Prepare the hit-point data
+*/
+ShadingData rtPrepareShadingData(VertexOut v, float3 camPosW)
+{
+    ExplicitLodTextureSampler lod = { 0 };
+
+    MaterialConstants m = bindless(gRtMaterials.constants);
+
+    ShadingData sd = initShadingData();
+
+#ifdef _MS_STATIC_MATERIAL_FLAGS
+    m.flags = _MS_STATIC_MATERIAL_FLAGS;
+#endif
+
+    // Sample the diffuse texture and apply the alpha test
+    float4 baseColor = sampleTexture(bindless(gRtMaterials.baseColor), bindless(gRtMaterials.samplerState), v.texC, m.baseColor, EXTRACT_DIFFUSE_TYPE(m.flags), lod);
+    sd.opacity = m.baseColor.a;
+    applyAlphaTest(m.flags, baseColor.a, m.alphaThreshold, v.posW);
+
+    sd.posW = v.posW;
+    sd.uv = v.texC;
+    sd.V = normalize(camPosW - v.posW);
+    sd.N = normalize(v.normalW);
+
+    sd.B = normalize(v.bitangentW - sd.N * (dot(v.bitangentW, sd.N)));
+    sd.T = normalize(cross(sd.B, sd.N));
+
+    // Sample the spec texture
+    bool sampleOcclusion = EXTRACT_OCCLUSION_MAP(m.flags) > 0;
+    float4 spec = sampleTexture(bindless(gRtMaterials.specular), bindless(gRtMaterials.samplerState), v.texC, m.specular, EXTRACT_SPECULAR_TYPE(m.flags), lod);
+    if (EXTRACT_SHADING_MODEL(m.flags) == ShadingModelMetalRough)
+    {
+        // R - Occlusion; G - Roughness; B - Metalness
+        sd.diffuse = lerp(baseColor.rgb, float3(0), spec.b);
+
+        // UE4 uses 0.08 multiplied by a default specular value of 0.5 as a base, hence the 0.04
+        sd.specular = lerp(float3(0.04f), baseColor.rgb, spec.b);
+        sd.linearRoughness = spec.g;
+
+        if (sampleOcclusion) sd.occlusion = spec.r;
+    }
+    else // if (EXTRACT_SHADING_MODEL(m.flags) == ShadingModelSpecGloss)
+    {
+        sd.diffuse = baseColor.rgb;
+        sd.specular = spec.rgb;
+        sd.linearRoughness = 1 - spec.a;
+
+        if(sampleOcclusion)
+        {
+            sd.occlusion = sampleTexture(bindless(gRtMaterials.occlusionMap), bindless(gRtMaterials.samplerState), v.texC, 1, ChannelTypeTexture, lod);
+        }
+    }
+
+    sd.linearRoughness = max(0.08, sd.linearRoughness); // Clamp the roughness so that the BRDF won't explode
+    sd.roughness = sd.linearRoughness * sd.linearRoughness;
+    sd.emissive = sampleTexture(bindless(gRtMaterials.emissive), bindless(gRtMaterials.samplerState), v.texC, float4(m.emissive, 1), EXTRACT_EMISSIVE_TYPE(m.flags), lod).rgb;
+    sd.IoR = m.IoR;
+    sd.doubleSidedMaterial = EXTRACT_DOUBLE_SIDED(m.flags);
+
+#define channel_type(extract) (extract(m.flags) ? ChannelTypeTexture : ChannelTypeUnused)
+    sd.lightMap = sampleTexture(bindless(gRtMaterials.lightMap), bindless(gRtMaterials.samplerState), v.lightmapC, 1, channel_type(EXTRACT_LIGHT_MAP), lod).rgb;
+    sd.height = sampleTexture(bindless(gRtMaterials.heightMap), bindless(gRtMaterials.samplerState), v.texC, 1, channel_type(EXTRACT_HEIGHT_MAP), lod).xy;
+    sd.height = sd.height * m.heightScaleOffset.x + m.heightScaleOffset.y;
+#undef channel_type
+
+    // Apply normal map
+    uint mapType = EXTRACT_NORMAL_MAP_TYPE(m.flags);
+    if(mapType != NormalMapUnused)
+    {
+        float3 mapN = lod.sampleTexture(bindless(gRtMaterials.normalMap), bindless(gRtMaterials.samplerState), sd.uv).xyz;
+        switch(mapType)
+        {
+        case NormalMapRGB:
+            mapN = RgbToNormal(mapN);
+            break;
+        case NormalMapRG:
+            mapN = RgToNormal(mapN.rg);
+            break;
+        }
+
+        // Apply the transformation. Everything is normalized already
+        sd.N = sd.T * mapN.x + sd.B * mapN.y + sd.N * mapN.z;
+        sd.B = normalize(sd.B - sd.N * dot(sd.B, sd.N));
+        sd.T = normalize(cross(sd.B, sd.N));
+    }
+
+    sd.NdotV = dot(sd.N, sd.V);
+
+    // Flip the normal if it's backfacing
+    if(sd.NdotV <= 0 && sd.doubleSidedMaterial)
+    {
+        sd.N = -sd.N;
+        sd.NdotV = -sd.NdotV;
+    }
+
+    return sd;
 }
 
 #endif

@@ -58,7 +58,6 @@ namespace Falcor
         };
 
         virtual void setPerFrameData(RtProgramVars* pRtVars, InstanceData& data);
-        virtual bool setPerMaterialData(const CurrentWorkingData& currentData, const Material* pMaterial) override;
         virtual bool setPerModelData(const CurrentWorkingData& currentData) override;
         virtual bool setPerMeshInstanceData(const CurrentWorkingData& currentData, const Scene::ModelInstance* pModelInstance, const Model::MeshInstance* pMeshInstance, uint32_t drawInstanceID) override;
         virtual void setHitShaderData(RtProgramVars* pRtVars, InstanceData& data);
@@ -68,6 +67,27 @@ namespace Falcor
 
         void initializeMeshBufferLocation(const ProgramReflection* pReflection);
         void bindMeshBuffers(const Vao* pVao, GraphicsVars* pVars, uint32_t geometryID);
+
+#ifdef FALCOR_VK
+        void setGeometryMaterialData(RtProgramVars* pRtVars, const Material* pMaterial, uint32_t geometryID);
+
+        struct MaterialResourceLocations
+        {
+            ParameterBlockReflection::BindLocation baseColor;
+            ParameterBlockReflection::BindLocation specular;
+            ParameterBlockReflection::BindLocation emissive;
+            ParameterBlockReflection::BindLocation normalMap;
+            ParameterBlockReflection::BindLocation occlusionMap;
+            ParameterBlockReflection::BindLocation lightMap;
+            ParameterBlockReflection::BindLocation heightMap;
+            ParameterBlockReflection::BindLocation samplerState;
+        };
+        MaterialResourceLocations mMaterialResourceLocations;
+
+        // Vulkan uses bindless material
+        ParameterBlock::SharedPtr mpMaterialBlock;
+        StructuredBuffer::SharedPtr mpMaterialConstantsBuffer;
+#endif
 
         struct MeshBufferLocations
         {

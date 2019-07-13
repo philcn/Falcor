@@ -70,9 +70,12 @@ void rayGen()
 void closestHit(BuiltInTriangleIntersectionAttributes attribs, in out PrimaryRayData payload)
 {
     uint triangleIndex = PrimitiveIndex();
+    float3 rayOrigW = WorldRayOrigin();
+
     VertexOut v = getVertexAttributes(triangleIndex, attribs);
+    ShadingData sd = rtPrepareShadingData(v, rayOrigW);
     
-    payload.color = v.normalW * 0.5 + 0.5;
+    payload.color = sd.diffuse;
 }
 
 void miss(in out PrimaryRayData payload)

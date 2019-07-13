@@ -380,7 +380,10 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseVK|x64'">
       </ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="Experimental\Raytracing\Vulkan\VKRtEntryPoints.cpp" />
+    <ClCompile Include="Experimental\Raytracing\Vulkan\VKRtEntryPoints.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugD3D12|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseD3D12|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="Experimental\Raytracing\Vulkan\VKRtModel.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugD3D12|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseD3D12|x64'">true</ExcludedFromBuild>

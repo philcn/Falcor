@@ -71,11 +71,6 @@ namespace Falcor
         }
     }
 
-    bool RtSceneRenderer::setPerMaterialData(const CurrentWorkingData& currentData, const Material* pMaterial)
-    {
-        return SceneRenderer::setPerMaterialData(currentData, pMaterial);
-    }
-
     bool RtSceneRenderer::setPerModelData(const CurrentWorkingData& currentData)
     {
         return SceneRenderer::setPerModelData(currentData);
