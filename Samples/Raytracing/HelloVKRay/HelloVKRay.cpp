@@ -85,9 +85,9 @@ void HelloVKRay::onLoad(SampleCallbacks* pSample, RenderContext* pRenderContext)
     }
 
     RtProgram::Desc rtProgDesc;
-    rtProgDesc.addShaderLibrary("Data/HelloVKRay.slang").setRayGen("rayGen");
-    rtProgDesc.addHitGroup(0, "closestHit", "");
-    rtProgDesc.addMiss(0, "miss");
+    rtProgDesc.addShaderLibrary("HelloVKRay.slang").setRayGen("rayGen");
+    rtProgDesc.addHitGroup(0, "primaryClosestHit", "").addMiss(0, "primaryMiss");
+    rtProgDesc.addHitGroup(1, "", "shadowAnyHit").addMiss(1, "shadowMiss");
 
     mpRaytraceProgram = RtProgram::create(rtProgDesc);
 
