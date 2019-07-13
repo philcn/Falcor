@@ -132,7 +132,6 @@ void HelloVKRay::onLoad(SampleCallbacks* pSample, RenderContext* pRenderContext)
     auto positionsBinding = mpRtVars->getGlobalVars()->getReflection()->getDefaultParameterBlock()->getResourceBinding("gPositions");
     auto normalsBinding = mpRtVars->getGlobalVars()->getReflection()->getDefaultParameterBlock()->getResourceBinding("gNormals");
 
-    uint32_t geometryID = 0;
     for (uint32_t model = 0; model < mpScene->getModelCount(); model++)
     {
         const Model* pModel = mpScene->getModel(model).get();
@@ -143,6 +142,7 @@ void HelloVKRay::onLoad(SampleCallbacks* pSample, RenderContext* pRenderContext)
                 const Mesh* pMesh = pModel->getMesh(mesh).get();
                 for (uint32_t meshInstance = 0; meshInstance < pModel->getMeshInstanceCount(mesh); meshInstance++)
                 {
+                    uint32_t geometryID = mpScene->getInstanceId(model, modelInstance, mesh, meshInstance);
                     const Vao* pVao = pModel->getMeshVao(pMesh).get();
 
                     auto indicesSrv = pVao->getIndexBuffer() ? pVao->getIndexBuffer()->getSRV() : nullptr;
@@ -155,11 +155,9 @@ void HelloVKRay::onLoad(SampleCallbacks* pSample, RenderContext* pRenderContext)
                     if (normalsBinding.setIndex != ProgramReflection::kInvalidLocation) mpRtVars->getGlobalVars()->getDefaultBlock()->setSrv(normalsBinding, geometryID, normalsSrv);
 
                     auto pBlock = mpRtVars->getHitVars(0)[geometryID]->getDefaultBlock();
-                    auto& sr = pBlock->getConstantBuffer("ShaderRecord");
+                    auto sr = pBlock->getConstantBuffer("ShaderRecord");
                     sr["gGeometryID"] = geometryID;
                     sr["gInstanceColor"] = glm::vec3(rand() / (float)RAND_MAX, rand() / (float)RAND_MAX, rand() / (float)RAND_MAX);
-
-                    geometryID++;
                 }
             }
         }
