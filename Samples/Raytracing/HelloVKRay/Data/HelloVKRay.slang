@@ -25,20 +25,10 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
+__import VKRaytracing;
 
 // Must be in global root signature; Vulkan raytracing doesn't support SRV in shader record
 shared RWTexture2D<float4> gOutput;
-
-shared RaytracingAccelerationStructure gRtScene;
-
-// shared Buffer<uint3> gIndices[]; // VKRayTODO: Should be using unbounded array of Buffer
-
-// Temp workaround
-// Using StructuredBuffer will return all 0's
-// Using uint3 and float3 will result in wrong indexing caused by alignment
-shared RWStructuredBuffer<uint> gIndices[7];
-shared RWStructuredBuffer<float> gPositions[7];
-shared RWStructuredBuffer<float> gNormals[7];
 
 shared cbuffer PerFrameCB
 {
@@ -52,13 +42,6 @@ struct PrimaryRayData
 {
     float3 color;
 };
-
-layout(shaderRecordNV) cbuffer ShaderRecord
-{
-    float4x4 pad; // Test ShaderRecord size calculation and alignment
-    float3 gInstanceColor;
-    uint gGeometryID;
-}
 
 void rayGen() 
 {
@@ -84,50 +67,12 @@ void rayGen()
     gOutput[launchIndex.xy] = float4(payload.color, 1.0);
 }
 
-float3 loadFloat3(RWStructuredBuffer<float> buffer, uint index)
-{
-    float3 v = 0.0;
-    v[0] = buffer[index * 3];
-    v[1] = buffer[index * 3 + 1];
-    v[2] = buffer[index * 3 + 2];
-
-    return v;
-}
-
 void closestHit(BuiltInTriangleIntersectionAttributes attribs, in out PrimaryRayData payload)
 {
-    float3 barycentrics = float3(1.0 - attribs.barycentrics.x - attribs.barycentrics.y, attribs.barycentrics.x, attribs.barycentrics.y);
-
-    uint indices[3];
-    indices[0] = gIndices[NonUniformResourceIndex(gGeometryID)][PrimitiveIndex() * 3];
-    indices[1] = gIndices[NonUniformResourceIndex(gGeometryID)][PrimitiveIndex() * 3 + 1];
-    indices[2] = gIndices[NonUniformResourceIndex(gGeometryID)][PrimitiveIndex() * 3 + 2];
-
-    float3 p[3];
-    p[0] = loadFloat3(gPositions[NonUniformResourceIndex(gGeometryID)], indices[0]);
-    p[1] = loadFloat3(gPositions[NonUniformResourceIndex(gGeometryID)], indices[1]);
-    p[2] = loadFloat3(gPositions[NonUniformResourceIndex(gGeometryID)], indices[2]);
-
-    float3 n[3];
-    n[0] = loadFloat3(gNormals[NonUniformResourceIndex(gGeometryID)], indices[0]);
-    n[1] = loadFloat3(gNormals[NonUniformResourceIndex(gGeometryID)], indices[1]);
-    n[2] = loadFloat3(gNormals[NonUniformResourceIndex(gGeometryID)], indices[2]);
-
-    float3 position = 0.0;
-    float3 normal = 0.0;
-
-    for (int i = 0; i < 3; ++i)
-    {
-        position += p[i] * barycentrics[i];
-        normal += n[i] * barycentrics[i];
-    }
-
-    // payload.color = float3(indices) / 1000.0f;
-    // payload.color = position / 100.0f;
-    payload.color = normal * 0.5 + 0.5;
-
-    // payload.color = gInstanceColor.rgb;
-    // payload.color = barycentrics;
+    uint triangleIndex = PrimitiveIndex();
+    VertexOut v = getVertexAttributes(triangleIndex, attribs);
+    
+    payload.color = v.normal * 0.5 + 0.5;
 }
 
 void miss(in out PrimaryRayData payload)
