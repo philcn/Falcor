@@ -79,6 +79,12 @@ void HelloDXR::loadScene(const std::string& filename, const Fbo* pTargetFbo)
     mpCamera->setDepthRange(nearZ, farZ);
     mpCamera->setAspectRatio((float)pTargetFbo->getWidth() / (float)pTargetFbo->getHeight());
     mpSceneRenderer = SceneRenderer::create(mpScene);
+
+#ifdef FALCOR_VK
+    // VKRayTODO: Clean this up
+    mpRaytraceProgram->addDefine("RT_GEOMETRY_COUNT", std::to_string(mpScene->getGeometryCount(mpRaytraceProgram->getHitProgramCount())));
+#endif
+
     mpRtVars = RtProgramVars::create(mpRaytraceProgram, mpScene);
     mpRtRenderer = RtSceneRenderer::create(mpScene);
 }
@@ -137,7 +143,7 @@ void HelloDXR::renderRT(RenderContext* pContext, const Fbo* pTargetFbo)
     setPerFrameVars(pTargetFbo);
 
     pContext->clearUAV(mpRtOut->getUAV().get(), kClearColor);
-    mpRtVars->getRayGenVars()->setTexture("gOutput", mpRtOut);
+    mpRtVars->getGlobalVars()->setTexture("gOutput", mpRtOut);
 
     mpRtRenderer->renderScene(pContext, mpRtVars, mpRtState, uvec3(pTargetFbo->getWidth(), pTargetFbo->getHeight(), 1), mpCamera.get());
     pContext->blit(mpRtOut->getSRV(), pTargetFbo->getRenderTargetView(0));
@@ -194,10 +200,20 @@ void HelloDXR::onResizeSwapChain(SampleCallbacks* pSample, uint32_t width, uint3
     mpRtOut = Texture::create2D(width, height, ResourceFormat::RGBA16Float, 1, 1, nullptr, Resource::BindFlags::UnorderedAccess | Resource::BindFlags::ShaderResource);
 }
 
+#ifdef _WIN32
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nShowCmd)
+#else
+int main(int argc, char** argv)
+#endif
 {
     HelloDXR::UniquePtr pRenderer = std::make_unique<HelloDXR>();
     SampleConfig config;
+#ifdef FALCOR_VK
+    // For vkGetPhysicalDeviceProperties2()
+    config.deviceDesc.apiMajorVersion = 1;
+    config.deviceDesc.apiMinorVersion = 1;
+    config.deviceDesc.requiredExtensions.push_back("VK_NV_ray_tracing");
+#endif
     config.windowDesc.title = "HelloDXR";
     config.windowDesc.resizableWindow = true;
 

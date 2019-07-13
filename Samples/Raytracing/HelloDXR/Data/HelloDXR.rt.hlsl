@@ -25,7 +25,10 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
-RWTexture2D<float4> gOutput;
+
+// Put in global root signature since Vulkan raytracing doesn't support SRV in shader record
+shared RWTexture2D<float4> gOutput;
+
 __import Raytracing;
 
 shared cbuffer PerFrameCB
@@ -114,7 +117,11 @@ void primaryClosestHit(inout PrimaryRayData hitData, in BuiltInTriangleIntersect
     float3 posW = rayOrigW + hitT * rayDirW;
     // prepare the shading data
     VertexOut v = getVertexAttributes(triangleIndex, attribs);
+#ifdef FALCOR_VK
+    ShadingData sd = rtPrepareShadingData(v, rayOrigW);
+#else
     ShadingData sd = prepareShadingData(v, gMaterial, rayOrigW, 0);
+#endif
 
     // Shoot a reflection ray
     float3 reflectColor = getReflectionColor(posW, v, rayDirW, hitData.depth.r);
