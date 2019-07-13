@@ -604,11 +604,11 @@
     <ClCompile Include="Experimental\Raytracing\Vulkan\VKRtStateObject.cpp">
       <Filter>Experimental\Raytracing\Vulkan</Filter>
     </ClCompile>
-    <ClCompile Include="Experimental\Raytracing\Vulkan\VKRtApi.cpp">
-      <Filter>Experimental\Raytracing\Vulkan</Filter>
-    </ClCompile>
     <ClCompile Include="Experimental\Raytracing\D3D12\D3D12RtSceneRenderer.cpp">
       <Filter>Experimental\Raytracing\D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="Experimental\Raytracing\Vulkan\VKRtEntryPoints.cpp">
+      <Filter>Experimental\Raytracing\Vulkan</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -2880,7 +2880,7 @@
     <None Include="..\Externals\GLM\glm\gtx\wrap.inl">
       <Filter>Externals\GLM\gtx</Filter>
     </None>
-    <None Include="ShadingUtils\VKRaytracing.slang">
+    <None Include="ShadingUtils\RaytracingVK.slang">
       <Filter>ShadingUtils</Filter>
     </None>
   </ItemGroup>

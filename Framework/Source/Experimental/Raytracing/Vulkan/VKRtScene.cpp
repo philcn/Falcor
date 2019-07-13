@@ -153,7 +153,6 @@ namespace Falcor
         mRtFlags |= RtBuildFlags::AllowUpdate;
 
         VkBuildAccelerationStructureFlagsNV vkRayFlags = getVKRayBuildFlags(mRtFlags);
-        (void)vkRayFlags; // VKRayTODO: Actually use the variable
 
         RenderContext* pContext = gpDevice->getRenderContext();
         std::vector<VkGeometryInstance> instanceDesc = createInstanceDesc(this, hitProgCount);
@@ -219,7 +218,7 @@ namespace Falcor
         asInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_INFO_NV;
         asInfo.pNext = nullptr;
         asInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_NV;
-        asInfo.flags = 0;
+        asInfo.flags = vkRayFlags;
         asInfo.instanceCount = mInstanceCount;
         asInfo.geometryCount = 0;
         asInfo.pGeometries = nullptr;

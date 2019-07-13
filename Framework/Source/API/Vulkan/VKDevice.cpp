@@ -705,6 +705,11 @@ namespace Falcor
 
         mApiHandle = DeviceHandle::create(instance, physicalDevice, device, surface);
         mSupportedFeatures = getSupportedFeatures(mApiHandle, mpApiData);
+        if (is_set(mSupportedFeatures, Device::SupportedFeatures::Raytracing))
+        {
+            loadRaytracingEntrypoints();
+        }
+
         mGpuTimestampFrequency = getPhysicalDeviceLimits().timestampPeriod / (1000 * 1000);
 
         if (createSwapChain(desc.colorFormat) == false)

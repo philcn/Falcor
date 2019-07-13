@@ -25,8 +25,8 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
-#ifndef __VK_RAYTRACING_H__
-#define __VK_RAYTRACING_H__
+#ifndef __RAYTRACING_VK_H__
+#define __RAYTRACING_VK_H__
 
 #include "HostDeviceData.h"
 
@@ -59,6 +59,8 @@ layout(shaderRecordNV) cbuffer InternalShaderRecord
 
     uint gGeometryID;
 };
+
+#define bindless(descArray) (descArray[NonUniformResourceIndex(gGeometryID)])
 
 // If defined, hit position is computed by barycentric interpolation of the vertex positions. 
 // Otherwise it is computed based on the ray equation in world space: p=o+t*d, which is numerically unstable.
@@ -94,9 +96,9 @@ uint3 getIndices(uint triangleIndex)
     uint baseIndex = triangleIndex * 3;
 
     uint3 indices;
-    indices[0] = gIndices[NonUniformResourceIndex(gGeometryID)][baseIndex];
-    indices[1] = gIndices[NonUniformResourceIndex(gGeometryID)][baseIndex + 1];
-    indices[2] = gIndices[NonUniformResourceIndex(gGeometryID)][baseIndex + 2];
+    indices[0] = bindless(gIndices)[baseIndex];
+    indices[1] = bindless(gIndices)[baseIndex + 1];
+    indices[2] = bindless(gIndices)[baseIndex + 2];
 
     return indices;
 }
@@ -133,12 +135,12 @@ VertexOut getVertexAttributes(uint triangleIndex, float3 barycentrics)
     for (int i = 0; i < 3; i++)
     {
         int address = (indices[i] * 3) * 4;
-        v.texC       += loadFloat2(gTexCrds[NonUniformResourceIndex(gGeometryID)], indices[i])     * barycentrics[i];
-        v.normalW    += loadFloat3(gNormals[NonUniformResourceIndex(gGeometryID)], indices[i])     * barycentrics[i];
-        v.bitangentW += loadFloat3(gBitangents[NonUniformResourceIndex(gGeometryID)], indices[i])  * barycentrics[i];
-        v.lightmapC  += loadFloat2(gLightMapUVs[NonUniformResourceIndex(gGeometryID)], indices[i]) * barycentrics[i];
+        v.texC       += loadFloat2(bindless(gTexCrds), indices[i])     * barycentrics[i];
+        v.normalW    += loadFloat3(bindless(gNormals), indices[i])     * barycentrics[i];
+        v.bitangentW += loadFloat3(bindless(gBitangents), indices[i])  * barycentrics[i];
+        v.lightmapC  += loadFloat2(bindless(gLightMapUVs), indices[i]) * barycentrics[i];
 #ifdef USE_INTERPOLATED_POSITION
-        v.posW       += loadFloat3(gPositions[NonUniformResourceIndex(gGeometryID)], indices[i])   * barycentrics[i];
+        v.posW       += loadFloat3(bindless(gPositions), indices[i])   * barycentrics[i];
 #endif
     }
 #ifdef USE_INTERPOLATED_POSITION
@@ -175,16 +177,16 @@ void getTriNormalsAndEdgesInObjectSpace(uint triangleIndex, out float3 n[3], out
     uint3 indices = getIndices(triangleIndex);
 
     float3 p[3];
-    p[0] = loadFloat3(gPositions[NonUniformResourceIndex(gGeometryID)], indices[0]);
-    p[1] = loadFloat3(gPositions[NonUniformResourceIndex(gGeometryID)], indices[1]);
-    p[2] = loadFloat3(gPositions[NonUniformResourceIndex(gGeometryID)], indices[2]);
+    p[0] = loadFloat3(bindless(gPositions), indices[0]);
+    p[1] = loadFloat3(bindless(gPositions), indices[1]);
+    p[2] = loadFloat3(bindless(gPositions), indices[2]);
 
     e[0] = p[1] - p[0];
     e[1] = p[2] - p[0];
 
-    n[0] = loadFloat3(gNormals[NonUniformResourceIndex(gGeometryID)], indices[0]);
-    n[1] = loadFloat3(gNormals[NonUniformResourceIndex(gGeometryID)], indices[1]);
-    n[2] = loadFloat3(gNormals[NonUniformResourceIndex(gGeometryID)], indices[2]);
+    n[0] = loadFloat3(bindless(gNormals), indices[0]);
+    n[1] = loadFloat3(bindless(gNormals), indices[1]);
+    n[2] = loadFloat3(bindless(gNormals), indices[2]);
 }
 
 /** Returns a triangle's geometric normal in world space.
@@ -196,9 +198,9 @@ float3 getGeometricNormalW(uint triangleIndex)
     uint3 indices = getIndices(triangleIndex);
 
     float3 p[3];
-    p[0] = loadFloat3(gPositions[NonUniformResourceIndex(gGeometryID)], indices[0]);
-    p[1] = loadFloat3(gPositions[NonUniformResourceIndex(gGeometryID)], indices[1]);
-    p[2] = loadFloat3(gPositions[NonUniformResourceIndex(gGeometryID)], indices[2]);
+    p[0] = loadFloat3(bindless(gPositions), indices[0]);
+    p[1] = loadFloat3(bindless(gPositions), indices[1]);
+    p[2] = loadFloat3(bindless(gPositions), indices[2]);
 
     float3 e[2];
     e[0] = p[1] - p[0];
@@ -219,7 +221,7 @@ float3 getPrevPosW(uint triangleIndex, float3 barycentrics)
     for (int i = 0; i < 3; i++)
     {
         // Load vertex in object space from vertex buffer for previous frame if it exists, otherwise from the current frame.
-        prevPos += loadFloat3(gPositions[NonUniformResourceIndex(gGeometryID)], indices[i]) * barycentrics[i];
+        prevPos += loadFloat3(bindless(gPositions), indices[i]) * barycentrics[i];
     }
 
     return mul(float4(prevPos, 1.f), gPrevWorldMatLocal).xyz;
@@ -231,4 +233,4 @@ float3 getPrevPosW(uint triangleIndex, BuiltInTriangleIntersectionAttributes att
     return getPrevPosW(triangleIndex, barycentrics);
 }
 
-#endif // __VK_RAYTRACING_H__
+#endif // __RAYTRACING_VK_H__

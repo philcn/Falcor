@@ -380,10 +380,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseVK|x64'">
       </ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="Experimental\Raytracing\Vulkan\VKRtApi.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugD3D12|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseD3D12|x64'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="Experimental\Raytracing\Vulkan\VKRtEntryPoints.cpp" />
     <ClCompile Include="Experimental\Raytracing\Vulkan\VKRtModel.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugD3D12|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseD3D12|x64'">true</ExcludedFromBuild>
@@ -1376,7 +1373,7 @@
     <None Include="ShadingUtils\Lights.slang" />
     <None Include="ShadingUtils\Raytracing.slang" />
     <None Include="ShadingUtils\Shading.slang" />
-    <None Include="ShadingUtils\VKRaytracing.slang" />
+    <None Include="ShadingUtils\RaytracingVK.slang" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\FalcorSharedObjects\FalcorSharedObjects.vcxproj">

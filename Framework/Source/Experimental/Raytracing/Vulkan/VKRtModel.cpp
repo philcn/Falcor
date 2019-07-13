@@ -57,7 +57,6 @@ namespace Falcor
         RenderContext* pContext = gpDevice->getRenderContext();
 
         VkBuildAccelerationStructureFlagsNV vkRayFlags = getVKRayBuildFlags(mBuildFlags);
-        (void)vkRayFlags; // VKRayTODO: Actually use the variable
 
         // Create an AS for each mesh-group
         for (auto& blasData : mBottomLevelData)
@@ -148,7 +147,7 @@ namespace Falcor
             asInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_INFO_NV;
             asInfo.pNext = NULL;
             asInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_NV;
-            asInfo.flags = 0;
+            asInfo.flags = vkRayFlags;
             asInfo.instanceCount = 0;
             asInfo.geometryCount = (uint32_t)geometries.size();
             asInfo.pGeometries = &geometries[0];

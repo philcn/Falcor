@@ -51,7 +51,7 @@ namespace Falcor
     PFN_vkCreateRayTracingPipelinesNV vkCreateRayTracingPipelinesNV = VK_NULL_HANDLE;
     PFN_vkGetAccelerationStructureHandleNV vkGetAccelerationStructureHandleNV = VK_NULL_HANDLE;
 
-    void initVKRtApi()
+    void loadRaytracingEntrypoints()
     {
         VkDevice device = gpDevice->getApiHandle();
         VK_RESOLVE_DEVICE_FUNCTION_ADDRESS(device, vkCreateAccelerationStructureNV);

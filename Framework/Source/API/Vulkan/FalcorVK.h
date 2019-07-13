@@ -132,6 +132,8 @@ namespace Falcor
     #define FALCOR_RT_MAX_PAYLOAD_SIZE_IN_BYTES (14 * sizeof(float))
     #define FALCOR_RT_MAX_ATTRIBUTE_SIZE_IN_BYTES 32 // VKRayTODO: verify
 
+    #define VK_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT 16
+
     using DeviceHandle = VkDeviceData::SharedPtr;
     using CommandListHandle = VkCommandBuffer;
     using CommandQueueHandle = VkQueue;
@@ -188,7 +190,7 @@ namespace Falcor
     extern PFN_vkCreateRayTracingPipelinesNV vkCreateRayTracingPipelinesNV;
     extern PFN_vkGetAccelerationStructureHandleNV vkGetAccelerationStructureHandleNV;
 
-    void initVKRtApi();
+    void loadRaytracingEntrypoints();
 }
 
 #define VK_FAILED(res) (res != VK_SUCCESS)

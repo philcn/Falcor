@@ -30,34 +30,11 @@
 static const glm::vec4 kClearColor(0.38f, 0.52f, 0.10f, 1);
 static const char* kDefaultScene = "Arcade/Arcade.fscene";
 
-static void reflectProgram(const RtProgram* program)
+std::string to_string(const vec3& v)
 {
-    auto globalReflector = program->getGlobalReflector();
-    auto raygenReflector = program->getRayGenProgram()->getLocalReflector();
-    auto hitReflector = program->getHitProgram(0)->getLocalReflector();
-
-    auto listParameterBlocks = [](ProgramReflection* reflector)
-    {
-        for (int i = 0; i < reflector->getParameterBlockCount(); ++i)
-        {
-            auto pb = reflector->getParameterBlock(i);
-            logWarning("Parameter block " + std::to_string(i) + ": " + pb->getName());
-            for (int j = 0; j < pb->getResourceVec().size(); ++j)
-            {
-                auto res = pb->getResourceVec()[j];
-                logWarning("Resource " + std::to_string(j) + ": " + res.name);
-            }
-        }
-    };
-
-    logWarning("Reflecting global: ");
-    listParameterBlocks(globalReflector.get());
-
-    logWarning("Reflecting raygen shader: ");
-    listParameterBlocks(const_cast<ProgramReflection*>(raygenReflector.get()));
-
-    logWarning("Reflecting hit shader: ");
-    listParameterBlocks(const_cast<ProgramReflection*>(hitReflector.get()));
+    std::string s;
+    s += "(" + std::to_string(v.x) + ", " + std::to_string(v.y) + ", " + std::to_string(v.z) + ")";
+    return s;
 }
 
 void HelloVKRay::onGuiRender(SampleCallbacks* pSample, Gui* pGui)
@@ -74,7 +51,7 @@ void HelloVKRay::onGuiRender(SampleCallbacks* pSample, Gui* pGui)
 
 void HelloVKRay::loadScene(const std::string& filename, const Fbo* pTargetFbo)
 {
-    mpScene = RtScene::loadFromFile(filename, RtBuildFlags::None, Model::LoadFlags::None /* RemoveInstancing */);
+    mpScene = RtScene::loadFromFile(filename, RtBuildFlags::None, Model::LoadFlags::RemoveInstancing);
     Model::SharedPtr pModel = mpScene->getModel(0);
     float radius = pModel->getRadius();
 
@@ -95,6 +72,7 @@ void HelloVKRay::loadScene(const std::string& filename, const Fbo* pTargetFbo)
     mpCamera->setDepthRange(nearZ, farZ);
     mpCamera->setAspectRatio((float)pTargetFbo->getWidth() / (float)pTargetFbo->getHeight());
 
+    // VKRayTODO: Clean this up
     mpRaytraceProgram->addDefine("RT_GEOMETRY_COUNT", std::to_string(mpScene->getGeometryCount(1)));
     mpRtVars = RtProgramVars::create(mpRaytraceProgram, mpScene);
 }
@@ -105,9 +83,6 @@ void HelloVKRay::onLoad(SampleCallbacks* pSample, RenderContext* pRenderContext)
     {
         logErrorAndExit("Device does not support raytracing!", true);
     }
-
-    // VKRayTODO: move this somewhere else
-    initVKRtApi();
 
     RtProgram::Desc rtProgDesc;
     rtProgDesc.addShaderLibrary("Data/HelloVKRay.slang").setRayGen("rayGen");
