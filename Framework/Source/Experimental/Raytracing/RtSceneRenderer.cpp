@@ -53,7 +53,15 @@ namespace Falcor
             setPerModelData(data.currentData);
             setPerModelInstanceData(data.currentData, pModelInstance, data.modelInstance);
             setPerMeshData(data.currentData, pMesh);
+#ifdef FALCOR_VK
+            // Pass instanceId to shader record
+            setPerMeshInstanceData(data.currentData, pModelInstance, pMeshInstance, instanceId);
+            // For Vulkan, mesh buffers are global descriptor arrays
+            bindMeshBuffers(pMesh->getVao().get(), pRtVars->getGlobalVars().get(), instanceId);
+#else
             setPerMeshInstanceData(data.currentData, pModelInstance, pMeshInstance, 0);
+            bindMeshBuffers(pMesh->getVao().get(), data.currentData.pVars, 0);
+#endif
             setPerMaterialData(data.currentData, pMesh->getMaterial().get());
         }
     }
@@ -67,63 +75,6 @@ namespace Falcor
         mMeshBufferLocations.position = pReflection->getDefaultParameterBlock()->getResourceBinding("gPositions");
         mMeshBufferLocations.prevPosition = pReflection->getDefaultParameterBlock()->getResourceBinding("gPrevPositions");
         mMeshBufferLocations.bitangent = pReflection->getDefaultParameterBlock()->getResourceBinding("gBitangents");
-    }
-
-    static bool setVertexBuffer(ParameterBlockReflection::BindLocation bindLocation, uint32_t vertexLoc, const Vao* pVao, GraphicsVars* pVars)
-    {
-        if (bindLocation.setIndex != ProgramReflection::kInvalidLocation)
-        {
-            const auto& elemDesc = pVao->getElementIndexByLocation(vertexLoc);
-            if (elemDesc.elementIndex == Vao::ElementDesc::kInvalidIndex)
-            {
-                pVars->getDefaultBlock()->setSrv(bindLocation, 0, nullptr);
-            }
-            else
-            {
-                assert(elemDesc.elementIndex == 0);
-                pVars->getDefaultBlock()->setSrv(bindLocation, 0, pVao->getVertexBuffer(elemDesc.vbIndex)->getSRV());
-                return true;
-            }
-        }
-        return false;
-    }
-
-    bool RtSceneRenderer::setPerMeshInstanceData(const CurrentWorkingData& currentData, const Scene::ModelInstance* pModelInstance, const Model::MeshInstance* pMeshInstance, uint32_t drawInstanceID)
-    {
-        const Mesh* pMesh = pMeshInstance->getObject().get();
-        const Vao* pVao = pModelInstance->getObject()->getMeshVao(pMesh).get();
-        auto& pVars = currentData.pVars;
-
-        if (mMeshBufferLocations.indices.setIndex != ProgramReflection::kInvalidLocation)
-        {
-            auto pSrv = pVao->getIndexBuffer() ? pVao->getIndexBuffer()->getSRV() : nullptr;
-            pVars->getDefaultBlock()->setSrv(mMeshBufferLocations.indices, 0, pSrv);
-        }
-
-        setVertexBuffer(mMeshBufferLocations.lightmapUVs, VERTEX_LIGHTMAP_UV_LOC, pVao, pVars);
-        setVertexBuffer(mMeshBufferLocations.texC, VERTEX_TEXCOORD_LOC, pVao, pVars);
-        setVertexBuffer(mMeshBufferLocations.normal, VERTEX_NORMAL_LOC, pVao, pVars);
-        setVertexBuffer(mMeshBufferLocations.position, VERTEX_POSITION_LOC, pVao, pVars);
-        setVertexBuffer(mMeshBufferLocations.bitangent, VERTEX_BITANGENT_LOC, pVao, pVars);
-
-        // Bind vertex buffer for previous positions if it exists. If not, we bind the current positions.
-        if (!setVertexBuffer(mMeshBufferLocations.prevPosition, VERTEX_PREV_POSITION_LOC, pVao, pVars))
-        {
-            setVertexBuffer(mMeshBufferLocations.prevPosition, VERTEX_POSITION_LOC, pVao, pVars);
-        }
-
-        return SceneRenderer::setPerMeshInstanceData(currentData, pModelInstance, pMeshInstance, drawInstanceID);
-    }
-
-    void RtSceneRenderer::setPerFrameData(RtProgramVars* pRtVars, InstanceData& data)
-    {
-        SceneRenderer::setPerFrameData(data.currentData);
-    }
-
-    void RtSceneRenderer::setRayGenShaderData(RtProgramVars* pRtVars, InstanceData& data)
-    {
-        data.currentData.pVars = pRtVars->getRayGenVars().get();
-        setPerFrameData(pRtVars, data);
     }
 
     void RtSceneRenderer::setGlobalData(RtProgramVars* pRtVars, InstanceData& data)
@@ -150,15 +101,6 @@ namespace Falcor
         SceneRenderer::setPerFrameData(data.currentData);
     }
 
-    void RtSceneRenderer::setMissShaderData(RtProgramVars* pRtVars, InstanceData& data)
-    {
-        data.currentData.pVars = pRtVars->getMissVars(data.progId).get();
-        if(data.currentData.pVars)
-        {
-            setPerFrameData(pRtVars, data);
-        }
-    }
-
     void RtSceneRenderer::renderScene(RenderContext* pContext, RtProgramVars::SharedPtr pRtVars, RtState::SharedPtr pState, uvec2 targetDim, Camera* pCamera)
     {
         renderScene(pContext, pRtVars, pState, uvec3(targetDim, 1), pCamera);
@@ -171,8 +113,14 @@ namespace Falcor
         uint32_t hitCount = pRtVars->getHitProgramsCount();
         if (hitCount)
         {   
+#ifdef FALCOR_VK
+            // For Vulkan, per frame CB and mesh buffers are global bindings
+            updateVariableOffsets(pState->getProgram()->getHitProgram(0)->getGlobalReflector().get(), true /* global only */);
+            initializeMeshBufferLocation(pState->getProgram()->getGlobalReflector().get());
+#else
             updateVariableOffsets(pState->getProgram()->getHitProgram(0)->getReflector().get()); // Using the local+global reflector, some resources are `shared`
             initializeMeshBufferLocation(pState->getProgram()->getHitProgram(0)->getLocalReflector().get()); // Using the local reflector only
+#endif
         }
 
         setRayGenShaderData(pRtVars.get(), data);
@@ -214,5 +162,24 @@ namespace Falcor
             assert(false);
         }
         pContext->raytrace(pRtVars, pState, targetDim.x, targetDim.y, targetDim.z);
+    }
+
+    void RtSceneRenderer::setPerFrameData(RtProgramVars* pRtVars, InstanceData& data)
+    {
+    }
+
+    void RtSceneRenderer::setRayGenShaderData(RtProgramVars* pRtVars, InstanceData& data)
+    {
+        data.currentData.pVars = pRtVars->getRayGenVars().get();
+        setPerFrameData(pRtVars, data);
+    }
+
+    void RtSceneRenderer::setMissShaderData(RtProgramVars* pRtVars, InstanceData& data)
+    {
+        data.currentData.pVars = pRtVars->getMissVars(data.progId).get();
+        if(data.currentData.pVars)
+        {
+            setPerFrameData(pRtVars, data);
+        }
     }
 }

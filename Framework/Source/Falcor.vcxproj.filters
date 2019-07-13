@@ -607,6 +607,9 @@
     <ClCompile Include="Experimental\Raytracing\Vulkan\VKRtApi.cpp">
       <Filter>Experimental\Raytracing\Vulkan</Filter>
     </ClCompile>
+    <ClCompile Include="Experimental\Raytracing\D3D12\D3D12RtSceneRenderer.cpp">
+      <Filter>Experimental\Raytracing\D3D12</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Graphics\Model\Animation.h">
@@ -2157,9 +2160,6 @@
       <Filter>Experimental\Raytracing\D3D12</Filter>
     </ClInclude>
     <ClInclude Include="Experimental\Raytracing\Vulkan\VKRtProgramVarsHelper.h">
-      <Filter>Experimental\Raytracing\Vulkan</Filter>
-    </ClInclude>
-    <ClInclude Include="Experimental\Raytracing\Vulkan\VKRtSceneRenderer.h">
       <Filter>Experimental\Raytracing\Vulkan</Filter>
     </ClInclude>
   </ItemGroup>

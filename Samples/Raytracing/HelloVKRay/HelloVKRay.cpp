@@ -122,7 +122,7 @@ void HelloVKRay::onLoad(SampleCallbacks* pSample, RenderContext* pRenderContext)
     mpRtState->setProgram(mpRaytraceProgram);
     mpRtState->setMaxTraceRecursionDepth(3);
 
-    mpRtRenderer = VKRtSceneRenderer::create(mpScene);
+    mpRtRenderer = RtSceneRenderer::create(mpScene);
 }
 
 void HelloVKRay::setPerFrameVars(const Fbo* pTargetFbo)

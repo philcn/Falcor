@@ -58,6 +58,8 @@ namespace Falcor
         };
 
         virtual void setPerFrameData(RtProgramVars* pRtVars, InstanceData& data);
+        virtual bool setPerMaterialData(const CurrentWorkingData& currentData, const Material* pMaterial) override;
+        virtual bool setPerModelData(const CurrentWorkingData& currentData) override;
         virtual bool setPerMeshInstanceData(const CurrentWorkingData& currentData, const Scene::ModelInstance* pModelInstance, const Model::MeshInstance* pMeshInstance, uint32_t drawInstanceID) override;
         virtual void setHitShaderData(RtProgramVars* pRtVars, InstanceData& data);
         virtual void setMissShaderData(RtProgramVars* pRtVars, InstanceData& data);
@@ -65,6 +67,7 @@ namespace Falcor
         virtual void setGlobalData(RtProgramVars* pRtVars, InstanceData& data);
 
         void initializeMeshBufferLocation(const ProgramReflection* pReflection);
+        void bindMeshBuffers(const Vao* pVao, GraphicsVars* pVars, uint32_t geometryID);
 
         struct MeshBufferLocations
         {

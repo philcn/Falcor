@@ -51,7 +51,7 @@ shared cbuffer InternalPerFrameCB : register(b10)
 };
 
 // Replace InternalPerMeshCB
-layout(shaderRecordNV) cbuffer ShaderRecord
+layout(shaderRecordNV) cbuffer InternalShaderRecord
 {
     float4x4 gWorldMatLocal;              // Per-instance world transforms
     float4x4 gPrevWorldMatLocal;          // Previous frame world transforms

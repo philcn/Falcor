@@ -31,75 +31,58 @@
 
 namespace Falcor
 {
-    static bool setVertexBuffer(ParameterBlockReflection::BindLocation bindLocation, uint32_t vertexLoc, const Vao* pVao, GraphicsVars* pVars, uint32_t geometryID)
+    static bool setVertexBuffer(ParameterBlockReflection::BindLocation bindLocation, uint32_t vertexLoc, const Vao* pVao, GraphicsVars* pVars)
     {
         if (bindLocation.setIndex != ProgramReflection::kInvalidLocation)
         {
             const auto& elemDesc = pVao->getElementIndexByLocation(vertexLoc);
             if (elemDesc.elementIndex == Vao::ElementDesc::kInvalidIndex)
             {
-                static Buffer::SharedPtr sNullBuffer = Buffer::create(1, Resource::BindFlags::UnorderedAccess, Buffer::CpuAccess::None);
-                pVars->getDefaultBlock()->setUav(bindLocation, geometryID, sNullBuffer->getUAV());
+                pVars->getDefaultBlock()->setSrv(bindLocation, 0, nullptr);
             }
             else
             {
                 assert(elemDesc.elementIndex == 0);
-                pVars->getDefaultBlock()->setUav(bindLocation, geometryID, pVao->getVertexBuffer(elemDesc.vbIndex)->getUAV());
+                pVars->getDefaultBlock()->setSrv(bindLocation, 0, pVao->getVertexBuffer(elemDesc.vbIndex)->getSRV());
                 return true;
             }
         }
         return false;
     }
 
-    void RtSceneRenderer::bindMeshBuffers(const Vao* pVao, GraphicsVars* pVars, uint32_t geometryID)
+    void RtSceneRenderer::bindMeshBuffers(const Vao * pVao, GraphicsVars * pVars, uint32_t geometryID /* unused */)
     {
         if (mMeshBufferLocations.indices.setIndex != ProgramReflection::kInvalidLocation)
         {
-            auto pUav = pVao->getIndexBuffer() ? pVao->getIndexBuffer()->getUAV() : nullptr;
-            pVars->getDefaultBlock()->setUav(mMeshBufferLocations.indices, geometryID, pUav);
+            auto pSrv = pVao->getIndexBuffer() ? pVao->getIndexBuffer()->getSRV() : nullptr;
+            pVars->getDefaultBlock()->setSrv(mMeshBufferLocations.indices, 0, pSrv);
         }
 
-        setVertexBuffer(mMeshBufferLocations.lightmapUVs, VERTEX_LIGHTMAP_UV_LOC, pVao, pVars, geometryID);
-        setVertexBuffer(mMeshBufferLocations.texC, VERTEX_TEXCOORD_LOC, pVao, pVars, geometryID);
-        setVertexBuffer(mMeshBufferLocations.normal, VERTEX_NORMAL_LOC, pVao, pVars, geometryID);
-        setVertexBuffer(mMeshBufferLocations.position, VERTEX_POSITION_LOC, pVao, pVars, geometryID);
-        setVertexBuffer(mMeshBufferLocations.bitangent, VERTEX_BITANGENT_LOC, pVao, pVars, geometryID);
+        setVertexBuffer(mMeshBufferLocations.lightmapUVs, VERTEX_LIGHTMAP_UV_LOC, pVao, pVars);
+        setVertexBuffer(mMeshBufferLocations.texC, VERTEX_TEXCOORD_LOC, pVao, pVars);
+        setVertexBuffer(mMeshBufferLocations.normal, VERTEX_NORMAL_LOC, pVao, pVars);
+        setVertexBuffer(mMeshBufferLocations.position, VERTEX_POSITION_LOC, pVao, pVars);
+        setVertexBuffer(mMeshBufferLocations.bitangent, VERTEX_BITANGENT_LOC, pVao, pVars);
 
         // Bind vertex buffer for previous positions if it exists. If not, we bind the current positions.
-        if (!setVertexBuffer(mMeshBufferLocations.prevPosition, VERTEX_PREV_POSITION_LOC, pVao, pVars, geometryID))
+        if (!setVertexBuffer(mMeshBufferLocations.prevPosition, VERTEX_PREV_POSITION_LOC, pVao, pVars))
         {
-            setVertexBuffer(mMeshBufferLocations.prevPosition, VERTEX_POSITION_LOC, pVao, pVars, geometryID);
+            setVertexBuffer(mMeshBufferLocations.prevPosition, VERTEX_POSITION_LOC, pVao, pVars);
         }
     }
 
     bool RtSceneRenderer::setPerMaterialData(const CurrentWorkingData& currentData, const Material* pMaterial)
     {
-        // VKRayTODO: Bind material
-        return true;
+        return SceneRenderer::setPerMaterialData(currentData, pMaterial);
     }
 
     bool RtSceneRenderer::setPerModelData(const CurrentWorkingData& currentData)
     {
-        // Note: Skinning not supported
-        return true;
+        return SceneRenderer::setPerModelData(currentData);
     }
 
-    bool RtSceneRenderer::setPerMeshInstanceData(const CurrentWorkingData& currentData, const Scene::ModelInstance* pModelInstance, const Model::MeshInstance* pMeshInstance, uint32_t instanceId)
+    bool RtSceneRenderer::setPerMeshInstanceData(const CurrentWorkingData& currentData, const Scene::ModelInstance* pModelInstance, const Model::MeshInstance* pMeshInstance, uint32_t drawInstanceID)
     {
-        const Mesh* pMesh = pMeshInstance->getObject().get();
-        assert(!pMesh->hasBones());
-
-        glm::mat4 worldMat = pModelInstance->getTransformMatrix() * pMeshInstance->getTransformMatrix();
-        glm::mat4 prevWorldMat = pModelInstance->getPrevTransformMatrix() * pMeshInstance->getTransformMatrix();
-        glm::mat3x4 worldInvTransposeMat = transpose(inverse(glm::mat3(worldMat)));
-
-        // Populate shader records
-        auto pCB = currentData.pVars->getDefaultBlock()->getConstantBuffer("InternalShaderRecord");
-        pCB["gWorldMatLocal"] = worldMat;
-        pCB["gPrevWorldMatLocal"] = prevWorldMat;
-        pCB["gWorldInvTransposeMatLocal"] = worldInvTransposeMat;
-        pCB["gGeometryID"] = instanceId;
-
-        return true;
+        return SceneRenderer::setPerMeshInstanceData(currentData, pModelInstance, pMeshInstance, drawInstanceID);
     }
 }

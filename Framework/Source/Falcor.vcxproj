@@ -338,6 +338,10 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseVK|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugVK|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="Experimental\Raytracing\D3D12\D3D12RtSceneRenderer.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugVK|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseVK|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="Experimental\Raytracing\D3D12\D3D12RtState.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugVK|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseVK|x64'">true</ExcludedFromBuild>
@@ -376,13 +380,34 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseVK|x64'">
       </ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="Experimental\Raytracing\Vulkan\VKRtApi.cpp" />
-    <ClCompile Include="Experimental\Raytracing\Vulkan\VKRtModel.cpp" />
-    <ClCompile Include="Experimental\Raytracing\Vulkan\VKRtProgramVars.cpp" />
-    <ClCompile Include="Experimental\Raytracing\Vulkan\VKRtScene.cpp" />
-    <ClCompile Include="Experimental\Raytracing\Vulkan\VKRtSceneRenderer.cpp" />
-    <ClCompile Include="Experimental\Raytracing\Vulkan\VKRtState.cpp" />
-    <ClCompile Include="Experimental\Raytracing\Vulkan\VKRtStateObject.cpp" />
+    <ClCompile Include="Experimental\Raytracing\Vulkan\VKRtApi.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugD3D12|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseD3D12|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Experimental\Raytracing\Vulkan\VKRtModel.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugD3D12|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseD3D12|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Experimental\Raytracing\Vulkan\VKRtProgramVars.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugD3D12|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseD3D12|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Experimental\Raytracing\Vulkan\VKRtScene.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugD3D12|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseD3D12|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Experimental\Raytracing\Vulkan\VKRtSceneRenderer.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugD3D12|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseD3D12|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Experimental\Raytracing\Vulkan\VKRtState.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugD3D12|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseD3D12|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Experimental\Raytracing\Vulkan\VKRtStateObject.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugD3D12|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseD3D12|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="Experimental\RenderGraph\RenderPass.cpp" />
     <ClCompile Include="Experimental\RenderGraph\RenderGraph.cpp" />
     <ClCompile Include="Experimental\RenderGraph\RenderGraphImportExport.cpp" />
@@ -1033,8 +1058,10 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseVK|x64'">
       </ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="Experimental\Raytracing\Vulkan\VKRtProgramVarsHelper.h" />
-    <ClInclude Include="Experimental\Raytracing\Vulkan\VKRtSceneRenderer.h" />
+    <ClInclude Include="Experimental\Raytracing\Vulkan\VKRtProgramVarsHelper.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugD3D12|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseD3D12|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="Experimental\RenderGraph\RenderGraph.h" />
     <ClInclude Include="Experimental\RenderGraph\RenderGraphImportExport.h" />
     <ClInclude Include="Experimental\RenderGraph\RenderGraphIR.h" />
