@@ -28,7 +28,8 @@
 #ifndef __RAYTRACING_VK_H__
 #define __RAYTRACING_VK_H__
 
-#include "HostDeviceData.h"
+__exported __import Shading;
+__exported __import DefaultVS;
 
 shared RWStructuredBuffer<uint> gIndices[RT_GEOMETRY_COUNT];
 shared RWStructuredBuffer<float> gTexCrds[RT_GEOMETRY_COUNT];
@@ -39,16 +40,6 @@ shared RWStructuredBuffer<float> gPrevPositions[RT_GEOMETRY_COUNT];
 shared RWStructuredBuffer<float> gLightMapUVs[RT_GEOMETRY_COUNT];
 
 shared RaytracingAccelerationStructure gRtScene;
-
-shared cbuffer InternalPerFrameCB : register(b10)
-{
-    CameraData gCamera;
-    uint32_t gLightsCount;
-    float3 internalPerFrameCBPad;
-    LightData gLights[MAX_LIGHT_SOURCES];
-    LightProbeData gLightProbe;
-    LightProbeSharedResources gProbeShared;
-};
 
 // Replace InternalPerMeshCB
 layout(shaderRecordNV) cbuffer InternalShaderRecord
@@ -102,18 +93,6 @@ uint3 getIndices(uint triangleIndex)
 
     return indices;
 }
-
-struct VertexOut
-{
-    float3 normalW    : NORMAL;
-    float3 bitangentW : BITANGENT;
-    float2 texC       : TEXCRD;
-    float3 posW       : POSW;
-    float4 colorV     : COLOR;
-    float4 prevPosH   : PREVPOSH;
-    float2 lightmapC  : LIGHTMAPUV;
-    float4 posH : SV_POSITION;
-};
 
 VertexOut getVertexAttributes(uint triangleIndex, float3 barycentrics)
 {
