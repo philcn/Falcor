@@ -173,10 +173,20 @@ void PathTracer::onResizeSwapChain(SampleCallbacks* pCallbacks, uint32_t width, 
     }
 }
 
+#ifdef _WIN32
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nShowCmd)
+#else
+int main(int argc, char** argv)
+#endif
 {
     PathTracer::UniquePtr pRenderer = std::make_unique<PathTracer>();
     SampleConfig config;
+#ifdef FALCOR_VK
+    // For vkGetPhysicalDeviceProperties2()
+    config.deviceDesc.apiMajorVersion = 1;
+    config.deviceDesc.apiMinorVersion = 1;
+    config.deviceDesc.requiredExtensions.push_back("VK_NV_ray_tracing");
+#endif
     config.windowDesc.title = "Path Tracer";
     config.windowDesc.resizableWindow = true;
     config.freezeTimeOnStartup = true;

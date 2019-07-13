@@ -52,7 +52,11 @@ void IndirectAnyHit(inout IndirectRayPayload rayData, BuiltInTriangleIntersectio
 void IndirectClosestHit(inout IndirectRayPayload rayData, BuiltInTriangleIntersectionAttributes attribs)
 {
     VertexOut vOut = getVertexAttributes(PrimitiveIndex(), attribs);
+#ifdef FALCOR_VK
+    ShadingData sd = rtPrepareShadingData(vOut, WorldRayOrigin());
+#else
     ShadingData sd = prepareShadingData(vOut, gMaterial, WorldRayOrigin(), 0);
+#endif
 
     // Add emissive color
     rayData.color = gEmitMult * sd.emissive.rgb;

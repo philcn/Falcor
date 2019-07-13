@@ -81,8 +81,7 @@ void HelloDXR::loadScene(const std::string& filename, const Fbo* pTargetFbo)
     mpSceneRenderer = SceneRenderer::create(mpScene);
 
 #ifdef FALCOR_VK
-    // VKRayTODO: Clean this up
-    mpRaytraceProgram->addDefine("RT_GEOMETRY_COUNT", std::to_string(mpScene->getGeometryCount(mpRaytraceProgram->getHitProgramCount())));
+    mpRaytraceProgram->addDefine("RT_GEOMETRY_COUNT", std::to_string(mpScene->getGeometryCount(mpRaytraceProgram->getHitProgramCount()))); // VKRayTODO: Clean this up
 #endif
 
     mpRtVars = RtProgramVars::create(mpRaytraceProgram, mpScene);

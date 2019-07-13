@@ -275,9 +275,11 @@ Global
 		{0B41644B-B687-44D8-9CD5-9D41E0011561}.DebugD3D12|x64.ActiveCfg = Debug|x64
 		{0B41644B-B687-44D8-9CD5-9D41E0011561}.DebugD3D12|x64.Build.0 = Debug|x64
 		{0B41644B-B687-44D8-9CD5-9D41E0011561}.DebugVK|x64.ActiveCfg = Debug|x64
+		{0B41644B-B687-44D8-9CD5-9D41E0011561}.DebugVK|x64.Build.0 = Debug|x64
 		{0B41644B-B687-44D8-9CD5-9D41E0011561}.ReleaseD3D12|x64.ActiveCfg = Release|x64
 		{0B41644B-B687-44D8-9CD5-9D41E0011561}.ReleaseD3D12|x64.Build.0 = Release|x64
 		{0B41644B-B687-44D8-9CD5-9D41E0011561}.ReleaseVK|x64.ActiveCfg = Release|x64
+		{0B41644B-B687-44D8-9CD5-9D41E0011561}.ReleaseVK|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
