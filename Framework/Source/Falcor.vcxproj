@@ -1373,7 +1373,6 @@
     <None Include="ShadingUtils\Lights.slang" />
     <None Include="ShadingUtils\Raytracing.slang" />
     <None Include="ShadingUtils\Shading.slang" />
-    <None Include="ShadingUtils\RaytracingVK.slang" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\FalcorSharedObjects\FalcorSharedObjects.vcxproj">

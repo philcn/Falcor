@@ -2880,8 +2880,5 @@
     <None Include="..\Externals\GLM\glm\gtx\wrap.inl">
       <Filter>Externals\GLM\gtx</Filter>
     </None>
-    <None Include="ShadingUtils\RaytracingVK.slang">
-      <Filter>ShadingUtils</Filter>
-    </None>
   </ItemGroup>
 </Project>
