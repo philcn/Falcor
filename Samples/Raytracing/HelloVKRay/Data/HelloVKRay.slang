@@ -72,7 +72,7 @@ void closestHit(BuiltInTriangleIntersectionAttributes attribs, in out PrimaryRay
     uint triangleIndex = PrimitiveIndex();
     VertexOut v = getVertexAttributes(triangleIndex, attribs);
     
-    payload.color = v.normal * 0.5 + 0.5;
+    payload.color = v.normalW * 0.5 + 0.5;
 }
 
 void miss(in out PrimaryRayData payload)

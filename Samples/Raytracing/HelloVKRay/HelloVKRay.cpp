@@ -94,6 +94,8 @@ void HelloVKRay::loadScene(const std::string& filename, const Fbo* pTargetFbo)
     float farZ = radius * 10;
     mpCamera->setDepthRange(nearZ, farZ);
     mpCamera->setAspectRatio((float)pTargetFbo->getWidth() / (float)pTargetFbo->getHeight());
+
+    mpRaytraceProgram->addDefine("RT_GEOMETRY_COUNT", std::to_string(mpScene->getGeometryCount(1)));
     mpRtVars = RtProgramVars::create(mpRaytraceProgram, mpScene);
 }
 
@@ -120,48 +122,7 @@ void HelloVKRay::onLoad(SampleCallbacks* pSample, RenderContext* pRenderContext)
     mpRtState->setProgram(mpRaytraceProgram);
     mpRtState->setMaxTraceRecursionDepth(3);
 
-    // VKRayTODO: move this into VkRtSceneRenderer
-    ParameterBlockReflection::BindLocation loc = mpRtVars->getGlobalVars()->getReflection()->getDefaultParameterBlock()->getResourceBinding("gRtScene");
-    if (loc.setIndex != ProgramReflection::kInvalidLocation)
-    {
-        mpRtVars->getGlobalVars()->getDefaultBlock()->setAccelerationStructure(loc, 0, mpScene->getTlas(mpRaytraceProgram->getHitProgramCount()));
-    }
-
-    // Bind VB and IB
-    auto indicesBinding = mpRtVars->getGlobalVars()->getReflection()->getDefaultParameterBlock()->getResourceBinding("gIndices");
-    auto positionsBinding = mpRtVars->getGlobalVars()->getReflection()->getDefaultParameterBlock()->getResourceBinding("gPositions");
-    auto normalsBinding = mpRtVars->getGlobalVars()->getReflection()->getDefaultParameterBlock()->getResourceBinding("gNormals");
-
-    for (uint32_t model = 0; model < mpScene->getModelCount(); model++)
-    {
-        const Model* pModel = mpScene->getModel(model).get();
-        for (uint32_t modelInstance = 0; modelInstance < mpScene->getModelInstanceCount(model); modelInstance++)
-        {
-            for (uint32_t mesh = 0; mesh < pModel->getMeshCount(); mesh++)
-            {
-                const Mesh* pMesh = pModel->getMesh(mesh).get();
-                for (uint32_t meshInstance = 0; meshInstance < pModel->getMeshInstanceCount(mesh); meshInstance++)
-                {
-                    uint32_t geometryID = mpScene->getInstanceId(model, modelInstance, mesh, meshInstance);
-                    const Vao* pVao = pModel->getMeshVao(pMesh).get();
-
-                    auto indicesSrv = pVao->getIndexBuffer() ? pVao->getIndexBuffer()->getSRV() : nullptr;
-                    if (indicesBinding.setIndex != ProgramReflection::kInvalidLocation) mpRtVars->getGlobalVars()->getDefaultBlock()->setSrv(indicesBinding, geometryID, indicesSrv);
-
-                    auto positionsSrv = pVao->getVertexBuffer(pVao->getElementIndexByLocation(VERTEX_POSITION_LOC).vbIndex)->getSRV();
-                    if (positionsBinding.setIndex != ProgramReflection::kInvalidLocation) mpRtVars->getGlobalVars()->getDefaultBlock()->setSrv(positionsBinding, geometryID, positionsSrv);
-
-                    auto normalsSrv = pVao->getVertexBuffer(pVao->getElementIndexByLocation(VERTEX_NORMAL_LOC).vbIndex)->getSRV();
-                    if (normalsBinding.setIndex != ProgramReflection::kInvalidLocation) mpRtVars->getGlobalVars()->getDefaultBlock()->setSrv(normalsBinding, geometryID, normalsSrv);
-
-                    auto pBlock = mpRtVars->getHitVars(0)[geometryID]->getDefaultBlock();
-                    auto sr = pBlock->getConstantBuffer("ShaderRecord");
-                    sr["gGeometryID"] = geometryID;
-                    sr["gInstanceColor"] = glm::vec3(rand() / (float)RAND_MAX, rand() / (float)RAND_MAX, rand() / (float)RAND_MAX);
-                }
-            }
-        }
-    }
+    mpRtRenderer = VKRtSceneRenderer::create(mpScene);
 }
 
 void HelloVKRay::setPerFrameVars(const Fbo* pTargetFbo)
@@ -183,9 +144,7 @@ void HelloVKRay::renderRT(RenderContext* pContext, const Fbo* pTargetFbo)
     pContext->clearUAV(mpRtOut->getUAV().get(), kClearColor);
     mpRtVars->getGlobalVars()->setTexture("gOutput", mpRtOut);
 
-    mpRtVars->apply(pContext, mpRtState->getRtso().get());
-
-    pContext->raytrace(mpRtVars, mpRtState, mpRtOut->getWidth(), mpRtOut->getHeight(), 1);
+    mpRtRenderer->renderScene(pContext, mpRtVars, mpRtState, uvec3(mpRtOut->getWidth(), mpRtOut->getHeight(), 1), mpCamera.get());
 
     pContext->blit(mpRtOut->getSRV(), pTargetFbo->getRenderTargetView(0));
 }

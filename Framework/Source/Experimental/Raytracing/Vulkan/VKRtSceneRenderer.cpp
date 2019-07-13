@@ -44,13 +44,13 @@ namespace Falcor
             const auto& elemDesc = pVao->getElementIndexByLocation(vertexLoc);
             if (elemDesc.elementIndex == Vao::ElementDesc::kInvalidIndex)
             {
-                pVars->getDefaultBlock()->setSrv(bindLocation, geometryID, nullptr);
-                pVars->getDefaultBlock()->setUav(bindLocation, geometryID, nullptr); // VKRayTODO: Temp
+                static Buffer::SharedPtr sNullBuffer = Buffer::create(1, Resource::BindFlags::UnorderedAccess, Buffer::CpuAccess::None);
+                pVars->getDefaultBlock()->setUav(bindLocation, geometryID, sNullBuffer->getUAV());
             }
             else
             {
                 assert(elemDesc.elementIndex == 0);
-                pVars->getDefaultBlock()->setSrv(bindLocation, geometryID, pVao->getVertexBuffer(elemDesc.vbIndex)->getSRV());
+                pVars->getDefaultBlock()->setUav(bindLocation, geometryID, pVao->getVertexBuffer(elemDesc.vbIndex)->getUAV());
                 return true;
             }
         }
@@ -61,12 +61,11 @@ namespace Falcor
     {
         if (mMeshBufferLocations.indices.setIndex != ProgramReflection::kInvalidLocation)
         {
-            auto pSrv = pVao->getIndexBuffer() ? pVao->getIndexBuffer()->getSRV() : nullptr;
-            pVars->getDefaultBlock()->setSrv(mMeshBufferLocations.indices, geometryID, pSrv);
+            auto pUav = pVao->getIndexBuffer() ? pVao->getIndexBuffer()->getUAV() : nullptr;
+            pVars->getDefaultBlock()->setUav(mMeshBufferLocations.indices, geometryID, pUav);
         }
 
-// VKRayTODO
-//        setVertexBuffer(mMeshBufferLocations.lightmapUVs, VERTEX_LIGHTMAP_UV_LOC, pVao, pVars, geometryID);
+        setVertexBuffer(mMeshBufferLocations.lightmapUVs, VERTEX_LIGHTMAP_UV_LOC, pVao, pVars, geometryID);
         setVertexBuffer(mMeshBufferLocations.texC, VERTEX_TEXCOORD_LOC, pVao, pVars, geometryID);
         setVertexBuffer(mMeshBufferLocations.normal, VERTEX_NORMAL_LOC, pVao, pVars, geometryID);
         setVertexBuffer(mMeshBufferLocations.position, VERTEX_POSITION_LOC, pVao, pVars, geometryID);

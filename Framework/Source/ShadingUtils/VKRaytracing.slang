@@ -28,16 +28,27 @@
 #ifndef __VK_RAYTRACING_H__
 #define __VK_RAYTRACING_H__
 
+#include "HostDeviceData.h"
+
 shared RWStructuredBuffer<uint> gIndices[RT_GEOMETRY_COUNT];
 shared RWStructuredBuffer<float> gTexCrds[RT_GEOMETRY_COUNT];
 shared RWStructuredBuffer<float> gNormals[RT_GEOMETRY_COUNT];
 shared RWStructuredBuffer<float> gBitangents[RT_GEOMETRY_COUNT];
 shared RWStructuredBuffer<float> gPositions[RT_GEOMETRY_COUNT];
 shared RWStructuredBuffer<float> gPrevPositions[RT_GEOMETRY_COUNT];
-// VKRayTODO: Handle null view
-// shared RWStructuredBuffer<float> gLightMapUVs[RT_GEOMETRY_COUNT];
+shared RWStructuredBuffer<float> gLightMapUVs[RT_GEOMETRY_COUNT];
 
 shared RaytracingAccelerationStructure gRtScene;
+
+shared cbuffer InternalPerFrameCB : register(b10)
+{
+    CameraData gCamera;
+    uint32_t gLightsCount;
+    float3 internalPerFrameCBPad;
+    LightData gLights[MAX_LIGHT_SOURCES];
+    LightProbeData gLightProbe;
+    LightProbeSharedResources gProbeShared;
+};
 
 // Replace InternalPerMeshCB
 layout(shaderRecordNV) cbuffer ShaderRecord
@@ -125,8 +136,7 @@ VertexOut getVertexAttributes(uint triangleIndex, float3 barycentrics)
         v.texC       += loadFloat2(gTexCrds[NonUniformResourceIndex(gGeometryID)], indices[i])     * barycentrics[i];
         v.normalW    += loadFloat3(gNormals[NonUniformResourceIndex(gGeometryID)], indices[i])     * barycentrics[i];
         v.bitangentW += loadFloat3(gBitangents[NonUniformResourceIndex(gGeometryID)], indices[i])  * barycentrics[i];
-// VKRayTODO: Handle null view
-//        v.lightmapC  += loadFloat2(gLightMapUVs[NonUniformResourceIndex(gGeometryID)], indices[i]) * barycentrics[i];
+        v.lightmapC  += loadFloat2(gLightMapUVs[NonUniformResourceIndex(gGeometryID)], indices[i]) * barycentrics[i];
 #ifdef USE_INTERPOLATED_POSITION
         v.posW       += loadFloat3(gPositions[NonUniformResourceIndex(gGeometryID)], indices[i])   * barycentrics[i];
 #endif

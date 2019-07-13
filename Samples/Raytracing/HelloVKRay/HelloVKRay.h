@@ -28,6 +28,7 @@
 #pragma once
 #include "Falcor.h"
 #include "FalcorExperimental.h"
+#include "Experimental//Raytracing/Vulkan/VKRtSceneRenderer.h"
 
 using namespace Falcor;
 
@@ -43,6 +44,7 @@ public:
 
 private:
     RtScene::SharedPtr mpScene;
+    VKRtSceneRenderer::SharedPtr mpRtRenderer;
 
     RtProgram::SharedPtr mpRaytraceProgram = nullptr;
     Camera::SharedPtr mpCamera;
