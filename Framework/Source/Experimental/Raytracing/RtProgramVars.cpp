@@ -111,11 +111,7 @@ namespace Falcor
         // Calculate the record size
         mProgramIdentifierSize = getProgramIdentifierSize();
         mRecordSize = mProgramIdentifierSize + maxRootSigSize;
-#ifdef FALCOR_VK
-        mRecordSize = align_to(VK_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT, mRecordSize);
-#else
-        mRecordSize = align_to(D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT, mRecordSize); // We align to SHADER_TABLE_ALIGNMENT instead of SHADER_RECORD_ALIGNMENT because we pack all three tables in the same buffer
-#endif
+        mRecordSize = align_to(FALCOR_RT_SHADER_TABLE_BYTE_ALIGNMENT, mRecordSize); // We align to SHADER_TABLE_ALIGNMENT instead of SHADER_RECORD_ALIGNMENT because we pack all three tables in the same buffer
         assert(mRecordSize != 0);
 
         // Create the buffer and allocate the temporary storage

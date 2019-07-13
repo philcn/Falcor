@@ -128,11 +128,21 @@ namespace Falcor
         return vkRayFlags;
     }
 
+    struct VkGeometryInstance
+    {
+        float transform[12];
+        uint32_t instanceId : 24;
+        uint32_t mask : 8;
+        uint32_t instanceOffset : 24;
+        uint32_t flags : 8;
+        uint64_t accelerationStructureHandle;
+    };
+
     // The max scalars supported by our driver
     #define FALCOR_RT_MAX_PAYLOAD_SIZE_IN_BYTES (14 * sizeof(float))
     #define FALCOR_RT_MAX_ATTRIBUTE_SIZE_IN_BYTES 32 // VKRayTODO: verify
 
-    #define VK_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT 16
+    #define FALCOR_RT_SHADER_TABLE_BYTE_ALIGNMENT 16
 
     using DeviceHandle = VkDeviceData::SharedPtr;
     using CommandListHandle = VkCommandBuffer;

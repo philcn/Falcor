@@ -35,7 +35,7 @@ namespace Falcor
     VkMemoryRequirements getAccelerationStructureMemoryRequirements(VkAccelerationStructureNV handle, VkAccelerationStructureMemoryRequirementsTypeNV type);
 
     // VKRayTODO: share common logic with D3D12 implementation
-    std::vector<RtScene::VkGeometryInstance> RtScene::createInstanceDesc(const RtScene* pScene, uint32_t hitProgCount)
+    std::vector<VkGeometryInstance> RtScene::createInstanceDesc(const RtScene* pScene, uint32_t hitProgCount)
     {
         mGeometryCount = 0;
         std::vector<VkGeometryInstance> instanceDesc;

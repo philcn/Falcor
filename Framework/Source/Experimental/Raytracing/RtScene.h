@@ -85,15 +85,6 @@ namespace Falcor
         void createTlas(uint32_t rayCount);
 
 #ifdef FALCOR_VK
-        struct VkGeometryInstance
-        {
-            float transform[12];
-            uint32_t instanceId : 24;
-            uint32_t mask : 8;
-            uint32_t instanceOffset : 24;
-            uint32_t flags : 8;
-            uint64_t accelerationStructureHandle;
-        };
         std::vector<VkGeometryInstance> createInstanceDesc(const RtScene* pScene, uint32_t hitProgCount);
 #else
         std::vector<D3D12_RAYTRACING_INSTANCE_DESC> createInstanceDesc(const RtScene* pScene, uint32_t hitProgCount);
