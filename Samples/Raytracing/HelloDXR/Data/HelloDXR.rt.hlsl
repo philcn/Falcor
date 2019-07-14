@@ -117,11 +117,7 @@ void primaryClosestHit(inout PrimaryRayData hitData, in BuiltInTriangleIntersect
     float3 posW = rayOrigW + hitT * rayDirW;
     // prepare the shading data
     VertexOut v = getVertexAttributes(triangleIndex, attribs);
-#ifdef FALCOR_VK
-    ShadingData sd = rtPrepareShadingData(v, rayOrigW);
-#else
-    ShadingData sd = prepareShadingData(v, gMaterial, rayOrigW, 0);
-#endif
+    ShadingData sd = rtPrepareShadingData(v, gMaterial, rayOrigW, 0);
 
     // Shoot a reflection ray
     float3 reflectColor = getReflectionColor(posW, v, rayDirW, hitData.depth.r);

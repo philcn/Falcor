@@ -79,11 +79,6 @@ void HelloDXR::loadScene(const std::string& filename, const Fbo* pTargetFbo)
     mpCamera->setDepthRange(nearZ, farZ);
     mpCamera->setAspectRatio((float)pTargetFbo->getWidth() / (float)pTargetFbo->getHeight());
     mpSceneRenderer = SceneRenderer::create(mpScene);
-
-#ifdef FALCOR_VK
-    mpRaytraceProgram->addDefine("RT_GEOMETRY_COUNT", std::to_string(mpScene->getGeometryCount(mpRaytraceProgram->getHitProgramCount()))); // VKRayTODO: Clean this up
-#endif
-
     mpRtVars = RtProgramVars::create(mpRaytraceProgram, mpScene);
     mpRtRenderer = RtSceneRenderer::create(mpScene);
 }

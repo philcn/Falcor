@@ -114,10 +114,6 @@ void GGXGlobalIllumination::initialize(RenderContext* pContext, const RenderData
     if (mpProgram != nullptr && mpScene != nullptr)
     {
         mpSceneRenderer = RtSceneRenderer::create(mpScene);
-
-#ifdef FALCOR_VK
-        mpProgram->addDefine("RT_GEOMETRY_COUNT", std::to_string(mpScene->getGeometryCount(mpProgram->getHitProgramCount()))); // VKRayTODO: Clean this up
-#endif
         mpVars = RtProgramVars::create(mpProgram, mpScene);
     }
 
@@ -191,14 +187,7 @@ void GGXGlobalIllumination::setScene(const std::shared_ptr<Scene>& pScene)
     if (!mpScene) return;
 
     mpSceneRenderer = RtSceneRenderer::create(mpScene);
-
-    if (mpProgram != nullptr)
-    {
-#ifdef FALCOR_VK
-        mpProgram->addDefine("RT_GEOMETRY_COUNT", std::to_string(mpScene->getGeometryCount(mpProgram->getHitProgramCount()))); // VKRayTODO: Clean this up
-#endif
-        mpVars = RtProgramVars::create(mpProgram, mpScene);
-    }
+    if(mpProgram != nullptr) mpVars = RtProgramVars::create(mpProgram, mpScene);
 }
 
 void GGXGlobalIllumination::onResize(uint32_t width, uint32_t height)

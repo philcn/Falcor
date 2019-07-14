@@ -163,7 +163,13 @@ float3 getPrevPosW(uint triangleIndex, float3 barycentrics)
     return mul(float4(prevPos, 1.f), gPrevWorldMat[0]).xyz;
 }
 
+#define rtPrepareShadingData prepareShadingData
+
 #else // if defined(FALCOR_VK)
+
+#ifndef RT_GEOMETRY_COUNT
+#define RT_GEOMETRY_COUNT 1
+#endif
 
 shared RWStructuredBuffer<uint> gIndices[RT_GEOMETRY_COUNT];
 shared RWStructuredBuffer<float> gTexCrds[RT_GEOMETRY_COUNT];
@@ -354,7 +360,7 @@ float3 getPrevPosW(uint triangleIndex, float3 barycentrics)
 
 /** Prepare the hit-point data
 */
-ShadingData rtPrepareShadingData(VertexOut v, float3 camPosW)
+ShadingData rtPrepareShadingData(VertexOut v, MaterialData _, float3 camPosW)
 {
     ExplicitLodTextureSampler lod = { 0 };
 
@@ -448,6 +454,11 @@ ShadingData rtPrepareShadingData(VertexOut v, float3 camPosW)
     }
 
     return sd;
+}
+
+ShadingData rtPrepareShadingData(VertexOut v, MaterialData m, float3 camPosW, float lod)
+{
+    return rtPrepareShadingData(v, m, camPosW);
 }
 
 #endif
