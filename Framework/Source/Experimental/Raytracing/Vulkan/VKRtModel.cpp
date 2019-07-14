@@ -86,7 +86,6 @@ namespace Falcor
 
                 const Buffer* pVB = pVao->getVertexBuffer(elemDesc.vbIndex).get();
                 geometry.geometry.triangles.vertexData = pVB->getApiHandle();
-                // VKRayTODO: verify
                 geometry.geometry.triangles.vertexOffset = pVB->getGpuAddressOffset() + pVbLayout->getElementOffset(elemDesc.elementIndex);
                 geometry.geometry.triangles.vertexCount = pMesh->getVertexCount();
                 geometry.geometry.triangles.vertexStride = pVbLayout->getStride();

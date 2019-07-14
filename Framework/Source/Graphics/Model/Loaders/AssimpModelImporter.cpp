@@ -843,7 +843,6 @@ namespace Falcor
         if (is_set(mFlags, Model::LoadFlags::BuffersAsShaderResource))
         {
             bindFlags |= Buffer::BindFlags::ShaderResource;
-            bindFlags |= Buffer::BindFlags::UnorderedAccess; // VKRayTODO: Fix
         }
         return Buffer::create(size, bindFlags, Buffer::CpuAccess::None, indices.data());;
     }
@@ -988,7 +987,6 @@ namespace Falcor
         if (is_set(mFlags, Model::LoadFlags::BuffersAsShaderResource))
         {
             bindFlags |= Buffer::BindFlags::ShaderResource;
-            bindFlags |= Buffer::BindFlags::UnorderedAccess; // VKRayTODO: Fix
         }
 
         return Buffer::create(vertexStride * pAiMesh->mNumVertices, bindFlags, Buffer::CpuAccess::None, initData.data());;

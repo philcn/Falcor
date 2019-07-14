@@ -140,7 +140,7 @@ namespace Falcor
 
     // The max scalars supported by our driver
     #define FALCOR_RT_MAX_PAYLOAD_SIZE_IN_BYTES (14 * sizeof(float))
-    #define FALCOR_RT_MAX_ATTRIBUTE_SIZE_IN_BYTES 32 // VKRayTODO: verify
+    #define FALCOR_RT_MAX_ATTRIBUTE_SIZE_IN_BYTES 32 // Unused, but keep in sync with D3D12
 
     #define FALCOR_RT_SHADER_TABLE_BYTE_ALIGNMENT 16
 
