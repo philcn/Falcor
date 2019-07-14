@@ -45,8 +45,8 @@ namespace Falcor
         case DescriptorPool::Type::TypedBufferUav:
             return VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER;
         case DescriptorPool::Type::Cbv:
-        case DescriptorPool::Type::StructuredBufferSrv:
             return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        case DescriptorPool::Type::StructuredBufferSrv:
         case DescriptorPool::Type::StructuredBufferUav:
             return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
         case DescriptorPool::Type::Dsv:

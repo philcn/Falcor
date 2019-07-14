@@ -31,48 +31,7 @@
 
 namespace Falcor
 {
-    static bool setVertexBuffer(ParameterBlockReflection::BindLocation bindLocation, uint32_t vertexLoc, const Vao* pVao, GraphicsVars* pVars, uint32_t geometryID)
-    {
-        if (bindLocation.setIndex != ProgramReflection::kInvalidLocation)
-        {
-            const auto& elemDesc = pVao->getElementIndexByLocation(vertexLoc);
-            if (elemDesc.elementIndex == Vao::ElementDesc::kInvalidIndex)
-            {
-                static Buffer::SharedPtr sNullBuffer = Buffer::create(1, Resource::BindFlags::UnorderedAccess, Buffer::CpuAccess::None);
-                pVars->getDefaultBlock()->setUav(bindLocation, geometryID, sNullBuffer->getUAV());
-            }
-            else
-            {
-                assert(elemDesc.elementIndex == 0);
-                pVars->getDefaultBlock()->setUav(bindLocation, geometryID, pVao->getVertexBuffer(elemDesc.vbIndex)->getUAV());
-                return true;
-            }
-        }
-        return false;
-    }
-
-    void RtSceneRenderer::bindMeshBuffers(const Vao* pVao, GraphicsVars* pVars, uint32_t geometryID)
-    {
-        if (mMeshBufferLocations.indices.setIndex != ProgramReflection::kInvalidLocation)
-        {
-            auto pUav = pVao->getIndexBuffer() ? pVao->getIndexBuffer()->getUAV() : nullptr;
-            pVars->getDefaultBlock()->setUav(mMeshBufferLocations.indices, geometryID, pUav);
-        }
-
-        setVertexBuffer(mMeshBufferLocations.lightmapUVs, VERTEX_LIGHTMAP_UV_LOC, pVao, pVars, geometryID);
-        setVertexBuffer(mMeshBufferLocations.texC, VERTEX_TEXCOORD_LOC, pVao, pVars, geometryID);
-        setVertexBuffer(mMeshBufferLocations.normal, VERTEX_NORMAL_LOC, pVao, pVars, geometryID);
-        setVertexBuffer(mMeshBufferLocations.position, VERTEX_POSITION_LOC, pVao, pVars, geometryID);
-        setVertexBuffer(mMeshBufferLocations.bitangent, VERTEX_BITANGENT_LOC, pVao, pVars, geometryID);
-
-        // Bind vertex buffer for previous positions if it exists. If not, we bind the current positions.
-        if (!setVertexBuffer(mMeshBufferLocations.prevPosition, VERTEX_PREV_POSITION_LOC, pVao, pVars, geometryID))
-        {
-            setVertexBuffer(mMeshBufferLocations.prevPosition, VERTEX_POSITION_LOC, pVao, pVars, geometryID);
-        }
-    }
-
-    void RtSceneRenderer::setGeometryMaterialData(RtProgramVars* pRtVars, const Material* pMaterial, uint32_t geometryID)
+    void RtSceneRenderer::setMaterialDataForGeometry(RtProgramVars* pRtVars, const Material* pMaterial, uint32_t geometryID)
     {
         if (mMaterialResourceLocations.baseColor.setIndex == ProgramReflection::BindLocation::kInvalidLocation)
         {

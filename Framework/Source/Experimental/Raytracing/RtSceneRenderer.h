@@ -66,10 +66,10 @@ namespace Falcor
         virtual void setGlobalData(RtProgramVars* pRtVars, InstanceData& data);
 
         void initializeMeshBufferLocation(const ProgramReflection* pReflection);
-        void bindMeshBuffers(const Vao* pVao, GraphicsVars* pVars, uint32_t geometryID);
+        void setMeshBuffersForGeometry(const Vao* pVao, GraphicsVars* pVars, uint32_t geometryID);
 
 #ifdef FALCOR_VK
-        void setGeometryMaterialData(RtProgramVars* pRtVars, const Material* pMaterial, uint32_t geometryID);
+        void setMaterialDataForGeometry(RtProgramVars* pRtVars, const Material* pMaterial, uint32_t geometryID);
 
         struct MaterialResourceLocations
         {

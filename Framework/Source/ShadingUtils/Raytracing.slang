@@ -181,13 +181,13 @@ ShadingData rtPrepareShadingData(VertexOut v, MaterialData m, float3 camPosW, fl
 #define RT_GEOMETRY_COUNT 1
 #endif
 
-RWStructuredBuffer<uint> gIndices[RT_GEOMETRY_COUNT];
-RWStructuredBuffer<float> gTexCrds[RT_GEOMETRY_COUNT];
-RWStructuredBuffer<float> gNormals[RT_GEOMETRY_COUNT];
-RWStructuredBuffer<float> gBitangents[RT_GEOMETRY_COUNT];
-RWStructuredBuffer<float> gPositions[RT_GEOMETRY_COUNT];
-RWStructuredBuffer<float> gPrevPositions[RT_GEOMETRY_COUNT];
-RWStructuredBuffer<float> gLightMapUVs[RT_GEOMETRY_COUNT];
+StructuredBuffer<uint> gIndices[RT_GEOMETRY_COUNT];
+StructuredBuffer<float> gTexCrds[RT_GEOMETRY_COUNT];
+StructuredBuffer<float> gNormals[RT_GEOMETRY_COUNT];
+StructuredBuffer<float> gBitangents[RT_GEOMETRY_COUNT];
+StructuredBuffer<float> gPositions[RT_GEOMETRY_COUNT];
+StructuredBuffer<float> gPrevPositions[RT_GEOMETRY_COUNT];
+StructuredBuffer<float> gLightMapUVs[RT_GEOMETRY_COUNT];
 RaytracingAccelerationStructure gRtScene;
 
 // Replaces InternalPerMeshCB
@@ -235,7 +235,7 @@ ParameterBlock<MaterialArray> gRtMaterials;
 
 #define bindless(descArray) (descArray[NonUniformResourceIndex(gGeometryID)])
 
-float2 loadFloat2(RWStructuredBuffer<float> buffer, uint address)
+float2 loadFloat2(StructuredBuffer<float> buffer, uint address)
 {
     float2 v = 0.0;
     v[0] = buffer[address];
@@ -244,7 +244,7 @@ float2 loadFloat2(RWStructuredBuffer<float> buffer, uint address)
     return v;
 }
 
-float3 loadFloat3(RWStructuredBuffer<float> buffer, uint address)
+float3 loadFloat3(StructuredBuffer<float> buffer, uint address)
 {
     float3 v = 0.0;
     v[0] = buffer[address];

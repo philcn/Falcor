@@ -37,6 +37,52 @@ namespace Falcor
         return SharedPtr(new RtSceneRenderer(pScene));
     }
 
+    static bool setVertexBuffer(ParameterBlockReflection::BindLocation bindLocation, uint32_t vertexLoc, const Vao* pVao, GraphicsVars* pVars, uint32_t geometryID)
+    {
+        if (bindLocation.setIndex != ProgramReflection::kInvalidLocation)
+        {
+            const auto& elemDesc = pVao->getElementIndexByLocation(vertexLoc);
+            if (elemDesc.elementIndex == Vao::ElementDesc::kInvalidIndex)
+            {
+#ifdef FALCOR_VK
+                // Workaround for setSrvUavCommon() passing the view's buffer handle to the API, and the default null SRV doesn't have a backing buffer
+                static Buffer::SharedPtr sNullBuffer = Buffer::create(1, Resource::BindFlags::UnorderedAccess, Buffer::CpuAccess::None);
+                pVars->getDefaultBlock()->setSrv(bindLocation, geometryID, sNullBuffer->getSRV());
+#else
+                pVars->getDefaultBlock()->setSrv(bindLocation, 0, nullptr);
+#endif
+            }
+            else
+            {
+                assert(elemDesc.elementIndex == 0);
+                pVars->getDefaultBlock()->setSrv(bindLocation, geometryID, pVao->getVertexBuffer(elemDesc.vbIndex)->getSRV());
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void RtSceneRenderer::setMeshBuffersForGeometry(const Vao* pVao, GraphicsVars* pVars, uint32_t geometryID)
+    {
+        if (mMeshBufferLocations.indices.setIndex != ProgramReflection::kInvalidLocation)
+        {
+            auto pSrv = pVao->getIndexBuffer() ? pVao->getIndexBuffer()->getSRV() : nullptr;
+            pVars->getDefaultBlock()->setSrv(mMeshBufferLocations.indices, geometryID, pSrv);
+        }
+
+        setVertexBuffer(mMeshBufferLocations.lightmapUVs, VERTEX_LIGHTMAP_UV_LOC, pVao, pVars, geometryID);
+        setVertexBuffer(mMeshBufferLocations.texC, VERTEX_TEXCOORD_LOC, pVao, pVars, geometryID);
+        setVertexBuffer(mMeshBufferLocations.normal, VERTEX_NORMAL_LOC, pVao, pVars, geometryID);
+        setVertexBuffer(mMeshBufferLocations.position, VERTEX_POSITION_LOC, pVao, pVars, geometryID);
+        setVertexBuffer(mMeshBufferLocations.bitangent, VERTEX_BITANGENT_LOC, pVao, pVars, geometryID);
+
+        // Bind vertex buffer for previous positions if it exists. If not, we bind the current positions.
+        if (!setVertexBuffer(mMeshBufferLocations.prevPosition, VERTEX_PREV_POSITION_LOC, pVao, pVars, geometryID))
+        {
+            setVertexBuffer(mMeshBufferLocations.prevPosition, VERTEX_POSITION_LOC, pVao, pVars, geometryID);
+        }
+    }
+
     void RtSceneRenderer::setHitShaderData(RtProgramVars* pRtVars, InstanceData& data)
     {
         const RtScene* pScene = dynamic_cast<RtScene*>(mpScene.get());
@@ -50,20 +96,22 @@ namespace Falcor
             const Model::MeshInstance* pMeshInstance = pModel->getMeshInstance(data.mesh, data.meshInstance).get();
 
             setPerFrameData(pRtVars, data);
+
+#ifdef FALCOR_VK
+            // In Vulkan, store geometryID in shader record and use as simulated bindless handle for material and mesh buffers
+            uint32_t geometryId = instanceId;
+            setMaterialDataForGeometry(pRtVars, pMesh->getMaterial().get(), geometryId);
+            setMeshBuffersForGeometry(pMesh->getVao().get(), pRtVars->getGlobalVars().get(), geometryId);
+#else
+            uint32_t geometryID = 0;
+            setPerMaterialData(data.currentData, pMesh->getMaterial().get());
+            setMeshBuffersForGeometry(pMesh->getVao().get(), pRtVars->getGlobalVars().get(), 0);
+#endif
+
             setPerModelData(data.currentData);
             setPerModelInstanceData(data.currentData, pModelInstance, data.modelInstance);
             setPerMeshData(data.currentData, pMesh);
-#ifdef FALCOR_VK
-            // Pass instanceId to shader record
-            setPerMeshInstanceData(data.currentData, pModelInstance, pMeshInstance, instanceId);
-            // For Vulkan, mesh buffers are global descriptor arrays
-            bindMeshBuffers(pMesh->getVao().get(), pRtVars->getGlobalVars().get(), instanceId);
-            setGeometryMaterialData(pRtVars, pMesh->getMaterial().get(), instanceId);
-#else
-            setPerMeshInstanceData(data.currentData, pModelInstance, pMeshInstance, 0);
-            bindMeshBuffers(pMesh->getVao().get(), data.currentData.pVars, 0);
-            setPerMaterialData(data.currentData, pMesh->getMaterial().get());
-#endif
+            setPerMeshInstanceData(data.currentData, pModelInstance, pMeshInstance, geometryId); // Pass geometryID to shader record
         }
     }
 

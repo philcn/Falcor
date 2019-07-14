@@ -31,46 +31,6 @@
 
 namespace Falcor
 {
-    static bool setVertexBuffer(ParameterBlockReflection::BindLocation bindLocation, uint32_t vertexLoc, const Vao* pVao, GraphicsVars* pVars)
-    {
-        if (bindLocation.setIndex != ProgramReflection::kInvalidLocation)
-        {
-            const auto& elemDesc = pVao->getElementIndexByLocation(vertexLoc);
-            if (elemDesc.elementIndex == Vao::ElementDesc::kInvalidIndex)
-            {
-                pVars->getDefaultBlock()->setSrv(bindLocation, 0, nullptr);
-            }
-            else
-            {
-                assert(elemDesc.elementIndex == 0);
-                pVars->getDefaultBlock()->setSrv(bindLocation, 0, pVao->getVertexBuffer(elemDesc.vbIndex)->getSRV());
-                return true;
-            }
-        }
-        return false;
-    }
-
-    void RtSceneRenderer::bindMeshBuffers(const Vao * pVao, GraphicsVars * pVars, uint32_t geometryID /* unused */)
-    {
-        if (mMeshBufferLocations.indices.setIndex != ProgramReflection::kInvalidLocation)
-        {
-            auto pSrv = pVao->getIndexBuffer() ? pVao->getIndexBuffer()->getSRV() : nullptr;
-            pVars->getDefaultBlock()->setSrv(mMeshBufferLocations.indices, 0, pSrv);
-        }
-
-        setVertexBuffer(mMeshBufferLocations.lightmapUVs, VERTEX_LIGHTMAP_UV_LOC, pVao, pVars);
-        setVertexBuffer(mMeshBufferLocations.texC, VERTEX_TEXCOORD_LOC, pVao, pVars);
-        setVertexBuffer(mMeshBufferLocations.normal, VERTEX_NORMAL_LOC, pVao, pVars);
-        setVertexBuffer(mMeshBufferLocations.position, VERTEX_POSITION_LOC, pVao, pVars);
-        setVertexBuffer(mMeshBufferLocations.bitangent, VERTEX_BITANGENT_LOC, pVao, pVars);
-
-        // Bind vertex buffer for previous positions if it exists. If not, we bind the current positions.
-        if (!setVertexBuffer(mMeshBufferLocations.prevPosition, VERTEX_PREV_POSITION_LOC, pVao, pVars))
-        {
-            setVertexBuffer(mMeshBufferLocations.prevPosition, VERTEX_POSITION_LOC, pVao, pVars);
-        }
-    }
-
     bool RtSceneRenderer::setPerModelData(const CurrentWorkingData& currentData)
     {
         return SceneRenderer::setPerModelData(currentData);
