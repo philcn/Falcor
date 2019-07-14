@@ -103,9 +103,10 @@ namespace Falcor
             setMaterialDataForGeometry(pRtVars, pMesh->getMaterial().get(), geometryId);
             setMeshBuffersForGeometry(pMesh->getVao().get(), pRtVars->getGlobalVars().get(), geometryId);
 #else
-            uint32_t geometryID = 0;
+            // In D3D12, set material data and mesh buffers into hit shader vars
+            uint32_t geometryId = 0;
             setPerMaterialData(data.currentData, pMesh->getMaterial().get());
-            setMeshBuffersForGeometry(pMesh->getVao().get(), pRtVars->getGlobalVars().get(), 0);
+            setMeshBuffersForGeometry(pMesh->getVao().get(), data.currentData.pVars, 0);
 #endif
 
             setPerModelData(data.currentData);
@@ -163,8 +164,8 @@ namespace Falcor
         if (hitCount)
         {   
 #ifdef FALCOR_VK
-            // For Vulkan, per frame CB and mesh buffers are global bindings
-            updateVariableOffsets(pState->getProgram()->getHitProgram(0)->getGlobalReflector().get(), true /* global only */);
+            // In Vulkan, per frame CB and mesh buffers are global bindings
+            updateVariableOffsets(pState->getProgram()->getHitProgram(0)->getGlobalReflector().get(), true);
             initializeMeshBufferLocation(pState->getProgram()->getGlobalReflector().get());
 #else
             updateVariableOffsets(pState->getProgram()->getHitProgram(0)->getReflector().get()); // Using the local+global reflector, some resources are `shared`
