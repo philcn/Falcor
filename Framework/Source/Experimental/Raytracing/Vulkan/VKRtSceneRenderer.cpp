@@ -102,6 +102,9 @@ namespace Falcor
             mpMaterialBlock->setStructuredBuffer("constants", mpMaterialConstantsBuffer);
         }
 
+        static const size_t materialConstantsSize = sizeof(MaterialData) - sizeof(MaterialResources);
+        mpMaterialConstantsBuffer->setBlob(&pMaterial->mData, geometryID * materialConstantsSize, materialConstantsSize);
+
         mpMaterialBlock->setSrv(mMaterialResourceLocations.baseColor, geometryID, pMaterial->getBaseColorTexture() ? pMaterial->getBaseColorTexture()->getSRV() : ShaderResourceView::getNullView());
         mpMaterialBlock->setSrv(mMaterialResourceLocations.specular, geometryID, pMaterial->getSpecularTexture() ? pMaterial->getSpecularTexture()->getSRV() : ShaderResourceView::getNullView());
         mpMaterialBlock->setSrv(mMaterialResourceLocations.emissive, geometryID, pMaterial->getEmissiveTexture() ? pMaterial->getEmissiveTexture()->getSRV() : ShaderResourceView::getNullView());
@@ -110,31 +113,6 @@ namespace Falcor
         mpMaterialBlock->setSrv(mMaterialResourceLocations.lightMap, geometryID, pMaterial->getLightMap() ? pMaterial->getLightMap()->getSRV() : ShaderResourceView::getNullView());
         mpMaterialBlock->setSrv(mMaterialResourceLocations.heightMap, geometryID, pMaterial->getHeightMap() ? pMaterial->getHeightMap()->getSRV() : ShaderResourceView::getNullView());
         mpMaterialBlock->setSampler(mMaterialResourceLocations.samplerState, geometryID, pMaterial->getSampler());
-
-        struct MaterialConstants
-        {
-            float4 baseColor;
-            float4 specular;
-            float3 emissive;
-            float padf;
-            float alphaThreshold;
-            float IoR;
-            uint32_t id;
-            uint32_t flags;
-            float2 heightScaleOffset;
-            float2 pad;
-        };
-
-        MaterialConstants constants = {};
-        constants.baseColor = pMaterial->getBaseColor();
-        constants.specular = pMaterial->getSpecularParams();
-        constants.emissive = pMaterial->getEmissiveColor();
-        constants.alphaThreshold = pMaterial->getAlphaThreshold();
-        constants.IoR = pMaterial->getIndexOfRefraction();
-        constants.flags = pMaterial->getFlags();
-        constants.heightScaleOffset = float2(pMaterial->getHeightScale(), pMaterial->getHeightOffset());
-
-        mpMaterialConstantsBuffer->setBlob(&constants, geometryID * sizeof(MaterialConstants), sizeof(MaterialConstants));
 
         pRtVars->getGlobalVars()->setParameterBlock("gRtMaterials", mpMaterialBlock);
     }

@@ -215,7 +215,7 @@ struct MaterialConstants
     float2 pad;
 };
 
-struct MaterialTextures
+struct MaterialArray
 {
     Texture2D baseColor[RT_GEOMETRY_COUNT];
     Texture2D specular[RT_GEOMETRY_COUNT];
@@ -231,7 +231,7 @@ struct MaterialTextures
 };
 
 // Replaces gMaterial
-ParameterBlock<MaterialTextures> gRtMaterials;
+ParameterBlock<MaterialArray> gRtMaterials;
 
 #define bindless(descArray) (descArray[NonUniformResourceIndex(gGeometryID)])
 
