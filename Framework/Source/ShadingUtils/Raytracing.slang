@@ -163,7 +163,17 @@ float3 getPrevPosW(uint triangleIndex, float3 barycentrics)
     return mul(float4(prevPos, 1.f), gPrevWorldMat[0]).xyz;
 }
 
-#define rtPrepareShadingData prepareShadingData
+/** Prepare the hit-point data
+*/
+ShadingData rtPrepareShadingData(VertexOut v, MaterialData m, float3 camPosW)
+{
+    return prepareShadingData(v, m, camPosW);
+}
+
+ShadingData rtPrepareShadingData(VertexOut v, MaterialData m, float3 camPosW, float lod)
+{
+    return prepareShadingData(v, m, camPosW, lod);
+}
 
 #else // if defined(FALCOR_VK)
 
