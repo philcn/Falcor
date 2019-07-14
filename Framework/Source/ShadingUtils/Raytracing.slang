@@ -225,22 +225,21 @@ shared ParameterBlock<MaterialTextures> gRtMaterials;
 
 #define bindless(descArray) (descArray[NonUniformResourceIndex(gGeometryID)])
 
-float2 loadFloat2(RWStructuredBuffer<float> buffer, uint index)
+float2 loadFloat2(RWStructuredBuffer<float> buffer, uint address)
 {
     float2 v = 0.0;
-    // VKRayTODO: Find out why stride needs to be 3
-    v[0] = buffer[index * 3];
-    v[1] = buffer[index * 3 + 1];
+    v[0] = buffer[address];
+    v[1] = buffer[address + 1];
 
     return v;
 }
 
-float3 loadFloat3(RWStructuredBuffer<float> buffer, uint index)
+float3 loadFloat3(RWStructuredBuffer<float> buffer, uint address)
 {
     float3 v = 0.0;
-    v[0] = buffer[index * 3];
-    v[1] = buffer[index * 3 + 1];
-    v[2] = buffer[index * 3 + 2];
+    v[0] = buffer[address];
+    v[1] = buffer[address + 1];
+    v[2] = buffer[address + 2];
 
     return v;
 }
@@ -276,13 +275,13 @@ VertexOut getVertexAttributes(uint triangleIndex, float3 barycentrics)
     [unroll]
     for (int i = 0; i < 3; i++)
     {
-        int address = (indices[i] * 3) * 4;
-        v.texC       += loadFloat2(bindless(gTexCrds), indices[i])     * barycentrics[i];
-        v.normalW    += loadFloat3(bindless(gNormals), indices[i])     * barycentrics[i];
-        v.bitangentW += loadFloat3(bindless(gBitangents), indices[i])  * barycentrics[i];
-        v.lightmapC  += loadFloat2(bindless(gLightMapUVs), indices[i]) * barycentrics[i];
+        int address = indices[i] * 3; // Stride is 3 for all vertex attributes
+        v.texC       += loadFloat2(bindless(gTexCrds), address)     * barycentrics[i];
+        v.normalW    += loadFloat3(bindless(gNormals), address)     * barycentrics[i];
+        v.bitangentW += loadFloat3(bindless(gBitangents), address)  * barycentrics[i];
+        v.lightmapC  += loadFloat2(bindless(gLightMapUVs), address) * barycentrics[i];
 #ifdef USE_INTERPOLATED_POSITION
-        v.posW       += loadFloat3(bindless(gPositions), indices[i])   * barycentrics[i];
+        v.posW       += loadFloat3(bindless(gPositions), address)   * barycentrics[i];
 #endif
     }
 #ifdef USE_INTERPOLATED_POSITION
