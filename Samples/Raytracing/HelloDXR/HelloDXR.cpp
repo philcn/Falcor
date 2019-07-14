@@ -202,12 +202,7 @@ int main(int argc, char** argv)
 {
     HelloDXR::UniquePtr pRenderer = std::make_unique<HelloDXR>();
     SampleConfig config;
-#ifdef FALCOR_VK
-    // For vkGetPhysicalDeviceProperties2()
-    config.deviceDesc.apiMajorVersion = 1;
-    config.deviceDesc.apiMinorVersion = 1;
-    config.deviceDesc.requiredExtensions.push_back("VK_NV_ray_tracing");
-#endif
+    config.deviceDesc.enableRaytracing = true;
     config.windowDesc.title = "HelloDXR";
     config.windowDesc.resizableWindow = true;
 

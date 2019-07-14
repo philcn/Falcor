@@ -245,13 +245,13 @@ namespace Falcor
         return false;
     }
 
-    static void appendVrExtensions(std::vector<const char*>& vkExt, const std::vector<std::string>& vrSystemExt, const std::vector<VkExtensionProperties>& supportedExt)
+    static void appendExtensions(std::vector<const char*>& vkExt, const std::vector<std::string>& requiredExt, const std::vector<VkExtensionProperties>& supportedExt, const std::string& featureName)
     {
-        for (const auto& a : vrSystemExt)
+        for (const auto& a : requiredExt)
         {
             if (isExtensionSupported(a, supportedExt) == false)
             {
-                logError("Can't start OpenVR. Missing device extension " + a);
+                logError("Can't start " + featureName + ". Missing device extension " + a);
             }
             else
             {
@@ -286,26 +286,22 @@ namespace Falcor
 
         if (desc.enableDebugLayer) { requiredExtensions.push_back("VK_EXT_debug_report"); }
 
-        // Get the VR extensions
         std::vector<std::string> vrExt;
         if (desc.enableVR)
         {
             vrExt = VRSystem::getRequiredVkInstanceExtensions();
-            appendVrExtensions(requiredExtensions, vrExt, supportedExtensions);
+            appendExtensions(requiredExtensions, vrExt, supportedExtensions, "OpenVR");
         }
 
-        VkApplicationInfo applicationInfo;
-        applicationInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-        applicationInfo.pNext = nullptr;
-        applicationInfo.pApplicationName = "Falcor";
-        applicationInfo.applicationVersion = 1;
-        applicationInfo.pEngineName = nullptr;
-        applicationInfo.engineVersion = 0;
-        applicationInfo.apiVersion = VK_MAKE_VERSION(desc.apiMajorVersion, desc.apiMinorVersion, 0);
+        std::vector<std::string> raytracingExt;
+        if (desc.enableRaytracing)
+        {
+            raytracingExt = { "VK_KHR_get_physical_device_properties2" };
+            appendExtensions(requiredExtensions, raytracingExt, supportedExtensions, "ray tracing");
+        }
 
         VkInstanceCreateInfo instanceCreateInfo = {};
         instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-        instanceCreateInfo.pApplicationInfo = &applicationInfo;
         instanceCreateInfo.enabledLayerCount = (uint32_t)requiredLayers.size();
         instanceCreateInfo.ppEnabledLayerNames = requiredLayers.data();
         instanceCreateInfo.enabledExtensionCount = (uint32_t)requiredExtensions.size();
@@ -499,7 +495,14 @@ namespace Falcor
         if (desc.enableVR)
         {
             requiredOpenVRExt = VRSystem::getRequiredVkDeviceExtensions(physicalDevice);
-            appendVrExtensions(extensionNames, requiredOpenVRExt, pData->deviceExtensions);
+            appendExtensions(extensionNames, requiredOpenVRExt, pData->deviceExtensions, "OpenVR");
+        }
+
+        std::vector<std::string> requiredRaytracingExt;
+        if (desc.enableRaytracing)
+        {
+            requiredRaytracingExt = { "VK_NV_ray_tracing", "VK_KHR_get_memory_requirements2" };
+            appendExtensions(extensionNames, requiredRaytracingExt, pData->deviceExtensions, "ray tracing");
         }
 
         for (const auto& a : desc.requiredExtensions)
@@ -705,12 +708,12 @@ namespace Falcor
 
         mApiHandle = DeviceHandle::create(instance, physicalDevice, device, surface);
         mSupportedFeatures = getSupportedFeatures(mApiHandle, mpApiData);
-        if (is_set(mSupportedFeatures, Device::SupportedFeatures::Raytracing))
+        mGpuTimestampFrequency = getPhysicalDeviceLimits().timestampPeriod / (1000 * 1000);
+
+        if (desc.enableRaytracing && is_set(mSupportedFeatures, Device::SupportedFeatures::Raytracing))
         {
             loadRaytracingEntrypoints();
         }
-
-        mGpuTimestampFrequency = getPhysicalDeviceLimits().timestampPeriod / (1000 * 1000);
 
         if (createSwapChain(desc.colorFormat) == false)
         {

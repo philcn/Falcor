@@ -181,12 +181,7 @@ int main(int argc, char** argv)
 {
     PathTracer::UniquePtr pRenderer = std::make_unique<PathTracer>();
     SampleConfig config;
-#ifdef FALCOR_VK
-    // For vkGetPhysicalDeviceProperties2()
-    config.deviceDesc.apiMajorVersion = 1;
-    config.deviceDesc.apiMinorVersion = 1;
-    config.deviceDesc.requiredExtensions.push_back("VK_NV_ray_tracing");
-#endif
+    config.deviceDesc.enableRaytracing = true;
     config.windowDesc.title = "Path Tracer";
     config.windowDesc.resizableWindow = true;
     config.freezeTimeOnStartup = true;
