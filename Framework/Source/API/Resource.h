@@ -78,6 +78,9 @@ namespace Falcor
 #ifdef FALCOR_D3D12
             AccelerationStructure,
 #endif
+#ifdef FALCOR_VK
+            Raytracing
+#endif
         };
 
         using SharedPtr = std::shared_ptr<Resource>;

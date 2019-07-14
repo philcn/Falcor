@@ -198,8 +198,7 @@ namespace Falcor
         }
         else
         {
-            // VKRayTODO: insert barrier
-            // pContext->uavBarrier(mpTopLevelAS.get());
+            pContext->accelerationStructureBarrier();
         }
 
         // Create instance buffer
