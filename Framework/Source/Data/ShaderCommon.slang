@@ -40,13 +40,7 @@ shared cbuffer InternalPerFrameCB : register(b10)
     LightProbeSharedResources gProbeShared;
 };
 
-#ifdef FALCOR_VK
-#define RAYTRACING_BUFFER_SCOPE shared
-#else
-#define RAYTRACING_BUFFER_SCOPE
-#endif
-
-RAYTRACING_BUFFER_SCOPE cbuffer InternalPerMeshCB
+cbuffer InternalPerMeshCB
 {
     float4x4 gWorldMat[MAX_INSTANCES];              // Per-instance world transforms
     float4x4 gPrevWorldMat[MAX_INSTANCES];          // Previous frame world transforms
@@ -55,7 +49,7 @@ RAYTRACING_BUFFER_SCOPE cbuffer InternalPerMeshCB
     uint32_t gMeshId;
 };
 
-RAYTRACING_BUFFER_SCOPE cbuffer InternalBoneCB
+cbuffer InternalBoneCB
 {
     float4x4 gBoneMat[MAX_BONES];               // Per-model bone matrices
     float4x4 gInvTransposeBoneMat[MAX_BONES];   // Per-model bone inverse transpose matrices
@@ -83,7 +77,7 @@ float3x3 getBlendedInvTransposeBoneMat(float4 weights, uint4 ids)
 }
 #endif
 
-RAYTRACING_BUFFER_SCOPE ParameterBlock<MaterialData> gMaterial;
+ParameterBlock<MaterialData> gMaterial;
 
 float2 calcMotionVector(float2 pixelCrd, float4 prevPosH, float2 renderTargetDim)
 {

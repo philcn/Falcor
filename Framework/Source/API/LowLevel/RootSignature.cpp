@@ -115,6 +115,7 @@ namespace Falcor
         }
         d.setLocal(isLocal);
 #ifdef FALCOR_VK
+        // Validate no more than one shader record and store its size in root signature for building SBT
         if (isLocal)
         {
             const auto& pBlock = pReflector->getDefaultParameterBlock();

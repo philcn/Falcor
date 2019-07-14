@@ -25,9 +25,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
-
-// Put in global root signature since Vulkan raytracing doesn't support SRV in shader record
-shared RWTexture2D<float4> gOutput;
+RWTexture2D<float4> gOutput;
 
 __import Raytracing;
 

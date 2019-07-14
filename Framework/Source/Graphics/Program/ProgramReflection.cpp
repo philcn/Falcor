@@ -763,7 +763,13 @@ namespace Falcor
             if (pVar->getType()->unwrapArray()->asResourceType() == nullptr) continue;
             auto varMod = pVar->getModifier();
             
+#ifdef FALCOR_VK
+            // In Vulkan, Explicity only store the shader record buffer when reflecting the local scope
+            bool storeVar = is_set(varMod, ReflectionVar::Modifier::ShaderRecord) ? is_set(scopeToReflect, ResourceScope::Local) : is_set(scopeToReflect, ResourceScope::Global);
+#else
+            // Observe the shared qualifier in D3D12
             bool storeVar = is_set(varMod, ReflectionVar::Modifier::Shared) ? is_set(scopeToReflect, ResourceScope::Global) : is_set(scopeToReflect, ResourceScope::Local);
+#endif
             if (storeVar == false) continue;
 
             if (pSlangLayout->getType()->unwrapArray()->getKind() == TypeReflection::Kind::ParameterBlock)

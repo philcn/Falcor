@@ -171,18 +171,18 @@ float3 getPrevPosW(uint triangleIndex, float3 barycentrics)
 #define RT_GEOMETRY_COUNT 1
 #endif
 
-shared RWStructuredBuffer<uint> gIndices[RT_GEOMETRY_COUNT];
-shared RWStructuredBuffer<float> gTexCrds[RT_GEOMETRY_COUNT];
-shared RWStructuredBuffer<float> gNormals[RT_GEOMETRY_COUNT];
-shared RWStructuredBuffer<float> gBitangents[RT_GEOMETRY_COUNT];
-shared RWStructuredBuffer<float> gPositions[RT_GEOMETRY_COUNT];
-shared RWStructuredBuffer<float> gPrevPositions[RT_GEOMETRY_COUNT];
-shared RWStructuredBuffer<float> gLightMapUVs[RT_GEOMETRY_COUNT];
+RWStructuredBuffer<uint> gIndices[RT_GEOMETRY_COUNT];
+RWStructuredBuffer<float> gTexCrds[RT_GEOMETRY_COUNT];
+RWStructuredBuffer<float> gNormals[RT_GEOMETRY_COUNT];
+RWStructuredBuffer<float> gBitangents[RT_GEOMETRY_COUNT];
+RWStructuredBuffer<float> gPositions[RT_GEOMETRY_COUNT];
+RWStructuredBuffer<float> gPrevPositions[RT_GEOMETRY_COUNT];
+RWStructuredBuffer<float> gLightMapUVs[RT_GEOMETRY_COUNT];
+RaytracingAccelerationStructure gRtScene;
 
-shared RaytracingAccelerationStructure gRtScene;
-
-// Replace InternalPerMeshCB
-layout(shaderRecordNV) cbuffer InternalShaderRecord
+// Replaces InternalPerMeshCB
+[vk::shader_record]
+cbuffer InternalShaderRecord
 {
     float4x4 gWorldMatLocal;              // Per-instance world transforms
     float4x4 gPrevWorldMatLocal;          // Previous frame world transforms
@@ -220,8 +220,8 @@ struct MaterialTextures
     RWStructuredBuffer<MaterialConstants> constants;
 };
 
-// Replace gMaterial
-shared ParameterBlock<MaterialTextures> gRtMaterials;
+// Replaces gMaterial
+ParameterBlock<MaterialTextures> gRtMaterials;
 
 #define bindless(descArray) (descArray[NonUniformResourceIndex(gGeometryID)])
 
