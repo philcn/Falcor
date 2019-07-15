@@ -574,9 +574,6 @@
     <ClCompile Include="Experimental\Raytracing\D3D12\D3D12RtStateObject.cpp">
       <Filter>Experimental\Raytracing\D3D12</Filter>
     </ClCompile>
-    <ClCompile Include="Experimental\Raytracing\D3D12\D3D12RtState.cpp">
-      <Filter>Experimental\Raytracing\D3D12</Filter>
-    </ClCompile>
     <ClCompile Include="Experimental\Raytracing\D3D12\D3D12RtProgramVars.cpp">
       <Filter>Experimental\Raytracing\D3D12</Filter>
     </ClCompile>
@@ -596,9 +593,6 @@
       <Filter>Experimental\Raytracing\Vulkan</Filter>
     </ClCompile>
     <ClCompile Include="Experimental\Raytracing\Vulkan\VKRtSceneRenderer.cpp">
-      <Filter>Experimental\Raytracing\Vulkan</Filter>
-    </ClCompile>
-    <ClCompile Include="Experimental\Raytracing\Vulkan\VKRtState.cpp">
       <Filter>Experimental\Raytracing\Vulkan</Filter>
     </ClCompile>
     <ClCompile Include="Experimental\Raytracing\Vulkan\VKRtStateObject.cpp">

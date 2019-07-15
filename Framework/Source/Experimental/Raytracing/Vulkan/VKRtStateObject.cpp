@@ -27,6 +27,7 @@
 ***************************************************************************/
 #include "Framework.h"
 #include "Experimental/Raytracing/RtStateObject.h"
+#include "Experimental/Raytracing/RtProgramVars.h"
 #include "API/Device.h"
 #include "API/LowLevel/RootSignature.h"
 
@@ -38,6 +39,8 @@ namespace Falcor
 
         std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
         std::vector<VkRayTracingShaderGroupCreateInfoNV> shaderGroups;
+
+        std::map<std::wstring, uint32_t> exportNameToGroupID;
 
         // Loop over the programs
         for (const auto& pProg : pState->getProgramList())
@@ -76,6 +79,7 @@ namespace Falcor
                 }
 
                 shaderGroups.push_back(group);
+                exportNameToGroupID[pProg->getExportName()] = (uint32_t)shaderGroups.size() - 1;
             }
             else
             {
@@ -92,6 +96,7 @@ namespace Falcor
                 group.intersectionShader = VK_SHADER_UNUSED_NV;
 
                 shaderGroups.push_back(group);
+                exportNameToGroupID[pProg->getExportName()] = (uint32_t)shaderGroups.size() - 1;
             }
         }
 
@@ -114,6 +119,27 @@ namespace Falcor
         vk_call(vkCreateRayTracingPipelinesNV(gpDevice->getApiHandle(), nullptr, 1, &rayPipelineInfo, nullptr, &pipeline));
         pState->mApiHandle = ApiHandle::create(pipeline);
 
+        // Cache shader group handles
+        for (auto& pair : exportNameToGroupID)
+        {
+            const uint32_t handleSize = RtProgramVars::getProgramIdentifierSize();
+            std::unique_ptr<uint8_t[]> shaderGroupHandle = std::make_unique<uint8_t[]>(handleSize);
+            vk_call(vkGetRayTracingShaderGroupHandlesNV(gpDevice->getApiHandle(), pState->getApiHandle(), pair.second, 1, handleSize, reinterpret_cast<void*>(shaderGroupHandle.get())));
+            pState->mShaderGroupHandleCache[pair.first] = std::move(shaderGroupHandle);
+        }
+
         return pState;
+    }
+
+    const void* RtStateObject::getShaderGroupHandle(const RtProgramVersion* pProgVersion) const
+    {
+        const auto it = mShaderGroupHandleCache.find(pProgVersion->getExportName());
+        if (it == mShaderGroupHandleCache.end())
+        {
+            logError("Could not find cached shader group handle");
+            return nullptr;
+        }
+
+        return it->second.get();
     }
 }

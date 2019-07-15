@@ -58,23 +58,7 @@ namespace Falcor
 
     bool RtProgramVars::applyRtProgramVars(uint8_t* pRecord, const RtProgramVersion* pProgVersion, const RtStateObject* pRtso, ProgramVars* pVars, RtVarsContext* pContext)
     {
-        const RtStateObject::ProgramList& programList = pRtso->getProgramList();
-
-        // VKRayTODO: optimize this
-        auto it = std::find_if(programList.begin(), programList.end(), [=](RtProgramVersion::SharedConstPtr prog)
-        {
-            return prog.get() == pProgVersion;
-        });
-
-        if (it == programList.end())
-        {
-            logError("Could not find program version in RtStateObject program list");
-            return false;
-        }
-
-        uint32_t groupID = (uint32_t)std::distance(programList.begin(), it);
-
-        vk_call(vkGetRayTracingShaderGroupHandlesNV(gpDevice->getApiHandle(), pRtso->getApiHandle(), groupID, 1, mProgramIdentifierSize, reinterpret_cast<void*>(pRecord)));
+        memcpy(reinterpret_cast<void*>(pRecord), pRtso->getShaderGroupHandle(pProgVersion), mProgramIdentifierSize);
         pRecord += mProgramIdentifierSize;
 
         // Sets the write head for the proxy command list to copy constants to

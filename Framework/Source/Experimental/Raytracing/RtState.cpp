@@ -37,9 +37,7 @@ namespace Falcor
 
     RtState::RtState()
     {
-#ifdef FALCOR_D3D12
         mpRtsoGraph = StateGraph::create();
-#endif
     }
 
     RtState::~RtState() = default;
@@ -67,5 +65,51 @@ namespace Falcor
         }
 
         return programs;
+    }
+
+    RtStateObject::SharedPtr RtState::getRtso()
+    {
+        RtStateObject::ProgramList programs = createProgramList();
+        // Walk
+        for (const auto& p : programs)
+        {
+            mpRtsoGraph->walk((void*)p.get());
+        }
+
+        RtStateObject::SharedPtr pRtso = mpRtsoGraph->getCurrentNode();
+
+        if (pRtso == nullptr)
+        {
+            RtStateObject::Desc desc;
+            desc.setProgramList(programs).setMaxTraceRecursionDepth(mMaxTraceRecursionDepth);
+            desc.setGlobalRootSignature(mpProgram->getGlobalRootSignature());
+
+            StateGraph::CompareFunc cmpFunc = [&desc](RtStateObject::SharedPtr pRtso) -> bool
+            {
+                return pRtso && (desc == pRtso->getDesc());
+            };
+
+            if (mpRtsoGraph->scanForMatchingNode(cmpFunc))
+            {
+                pRtso = mpRtsoGraph->getCurrentNode();
+            }
+            else
+            {
+                pRtso = RtStateObject::create(desc);
+                mpRtsoGraph->setCurrentNodeData(pRtso);
+            }
+        }
+
+        return pRtso;
+    }
+
+    void RtState::setMaxTraceRecursionDepth(uint32_t maxDepth)
+    {
+        if (mMaxTraceRecursionDepth != maxDepth)
+        {
+            uint64_t edge = (uint64_t)maxDepth;
+            mpRtsoGraph->walk((void*)edge);
+        }
+        mMaxTraceRecursionDepth = maxDepth;
     }
 }

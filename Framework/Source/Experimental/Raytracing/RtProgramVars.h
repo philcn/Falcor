@@ -63,6 +63,8 @@ namespace Falcor
         uint32_t getHitProgramsCount() const { return mHitProgCount; }
         uint32_t getMissProgramsCount() const { return mMissProgCount; }
         uint32_t getHitRecordsCount() const { return mHitRecordCount; }
+
+        static uint32_t getProgramIdentifierSize();
         
     private:
         static const uint32_t kRayGenRecordIndex = 0;
@@ -84,7 +86,6 @@ namespace Falcor
         uint8_t* getHitRecordPtr(uint32_t hitId, uint32_t meshId);
 
         bool init();
-        uint32_t getProgramIdentifierSize();
         bool applyRtProgramVars(uint8_t* pRecord, const RtProgramVersion* pProgVersion, const RtStateObject* pRtso, ProgramVars* pVars, RtVarsContext* pContext);
 
         RaytracingVars::SharedPtr mpGlobalVars;
