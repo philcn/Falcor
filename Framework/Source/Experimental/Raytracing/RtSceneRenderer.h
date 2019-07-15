@@ -46,7 +46,7 @@ namespace Falcor
         void renderScene(RenderContext* pContext, std::shared_ptr<RtProgramVars> pRtVars, std::shared_ptr<RtState> pState, uvec2 targetDim, Camera* pCamera = nullptr);
         void renderScene(RenderContext* pContext, std::shared_ptr<RtProgramVars> pRtVars, std::shared_ptr<RtState> pState, uvec3 targetDim, Camera* pCamera = nullptr);
     protected:
-        RtSceneRenderer(RtScene::SharedPtr pScene) : SceneRenderer(pScene) {}
+        RtSceneRenderer(RtScene::SharedPtr pScene);
         struct InstanceData
         {
             CurrentWorkingData currentData;
@@ -67,6 +67,7 @@ namespace Falcor
 
         void initializeMeshBufferLocation(const ProgramReflection* pReflection);
         void setMeshBuffersForGeometry(const Vao* pVao, GraphicsVars* pVars, uint32_t geometryID);
+        bool setVertexBuffer(ParameterBlockReflection::BindLocation bindLocation, uint32_t vertexLoc, const Vao* pVao, GraphicsVars* pVars, uint32_t geometryID);
 
 #ifdef FALCOR_VK
         void setMaterialDataForGeometry(RtProgramVars* pRtVars, const Material* pMaterial, uint32_t geometryID);
@@ -88,6 +89,8 @@ namespace Falcor
         ParameterBlock::SharedPtr mpMaterialBlock;
         StructuredBuffer::SharedPtr mpMaterialConstantsBuffer;
         uint32_t mGeometryCount = 0;
+
+        Buffer::SharedPtr mNullBuffer;
 #endif
 
         struct MeshBufferLocations

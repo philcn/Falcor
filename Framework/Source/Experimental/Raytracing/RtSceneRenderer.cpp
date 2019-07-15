@@ -37,7 +37,14 @@ namespace Falcor
         return SharedPtr(new RtSceneRenderer(pScene));
     }
 
-    static bool setVertexBuffer(ParameterBlockReflection::BindLocation bindLocation, uint32_t vertexLoc, const Vao* pVao, GraphicsVars* pVars, uint32_t geometryID)
+    RtSceneRenderer::RtSceneRenderer(RtScene::SharedPtr pScene) : SceneRenderer(pScene)
+    {
+#ifdef FALCOR_VK
+        mNullBuffer = Buffer::create(1, Resource::BindFlags::UnorderedAccess, Buffer::CpuAccess::None);
+#endif
+    }
+
+    bool RtSceneRenderer::setVertexBuffer(ParameterBlockReflection::BindLocation bindLocation, uint32_t vertexLoc, const Vao* pVao, GraphicsVars* pVars, uint32_t geometryID)
     {
         if (bindLocation.setIndex != ProgramReflection::kInvalidLocation)
         {
@@ -46,8 +53,7 @@ namespace Falcor
             {
 #ifdef FALCOR_VK
                 // Workaround for setSrvUavCommon() passing the view's buffer handle to the API, and the default null SRV doesn't have a backing buffer
-                static Buffer::SharedPtr sNullBuffer = Buffer::create(1, Resource::BindFlags::UnorderedAccess, Buffer::CpuAccess::None);
-                pVars->getDefaultBlock()->setSrv(bindLocation, geometryID, sNullBuffer->getSRV());
+                pVars->getDefaultBlock()->setSrv(bindLocation, geometryID, mNullBuffer->getSRV());
 #else
                 pVars->getDefaultBlock()->setSrv(bindLocation, 0, nullptr);
 #endif
