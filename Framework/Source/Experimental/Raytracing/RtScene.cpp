@@ -121,4 +121,108 @@ namespace Falcor
         }
 #endif
     }
+
+    std::vector<RtScene::InstanceDescType> RtScene::createInstanceDesc(const RtScene* pScene, uint32_t hitProgCount)
+    {
+        mGeometryCount = 0;
+        std::vector<InstanceDescType> instanceDesc;
+        mModelInstanceData.resize(pScene->getModelCount());
+
+        uint32_t tlasIndex = 0;
+        uint32_t instanceContributionToHitGroupIndex = 0;
+        // Loop over all the models
+        for (uint32_t modelId = 0; modelId < pScene->getModelCount(); modelId++)
+        {
+            auto& modelInstanceData = mModelInstanceData[modelId];
+            const RtModel* pModel = dynamic_cast<RtModel*>(pScene->getModel(modelId).get());
+            assert(pModel); // Can't work on regular models
+            modelInstanceData.modelBase = tlasIndex;
+            modelInstanceData.meshInstancesPerModelInstance = 0;
+            modelInstanceData.meshBase.resize(pModel->getMeshCount());
+
+            for (uint32_t modelInstance = 0; modelInstance < pScene->getModelInstanceCount(modelId); modelInstance++)
+            {
+                const auto& pModelInstance = pScene->getModelInstance(modelId, modelInstance);
+                // Loop over the meshes
+                for (uint32_t blasId = 0; blasId < pModel->getBottomLevelDataCount(); blasId++)
+                {
+                    // Initialize the instance desc
+                    const auto& blasData = pModel->getBottomLevelData(blasId);
+                    InstanceDescType idesc = {};
+#ifdef FALCOR_VK
+                    vk_call(vkGetAccelerationStructureHandleNV(gpDevice->getApiHandle(), blasData.pBlas, sizeof(uint64_t), &idesc.accelerationStructureHandle));
+#else
+                    idesc.AccelerationStructure = blasData.pBlas->getGpuAddress();
+#endif
+
+                    // Set the meshes tlas offset
+                    if (modelInstance == 0)
+                    {
+                        for (uint32_t i = 0; i < blasData.meshCount; i++)
+                        {
+                            assert(blasData.meshCount == 1 || pModel->getMeshInstanceCount(blasData.meshBaseIndex + i) == 1);   // A BLAS shouldn't have multiple instanced meshes
+                            modelInstanceData.meshBase[blasData.meshBaseIndex + i] = modelInstanceData.meshInstancesPerModelInstance + i;   // If i>0 each mesh has a single instance
+                        }
+                    }
+
+                    uint32_t meshInstanceCount = pModel->getMeshInstanceCount(blasData.meshBaseIndex);
+                    for (uint32_t meshInstance = 0; meshInstance < meshInstanceCount; meshInstance++)
+                    {
+                        // TODO: This code is incorrect since a BLAS can have multiple meshes with different materials and hence different doubleSided flags.
+                        const auto& pMaterial = pModel->getMeshInstance(blasData.meshBaseIndex, meshInstance)->getObject()->getMaterial();
+                        bool isMaterialDoubleSided = pMaterial->isDoubleSided();
+
+                        // Only apply mesh-instance transform on non-skinned meshes
+                        mat4 transform = pModelInstance->getTransformMatrix();
+                        if (blasData.isStatic)
+                        {
+                            transform = transform * pModel->getMeshInstance(blasData.meshBaseIndex, meshInstance)->getTransformMatrix();    // If there are multiple meshes in a BLAS, they all have the same transform
+                        }
+                        transform = transpose(transform);
+
+#ifdef FALCOR_VK
+                        idesc.instanceId = uint32_t(instanceDesc.size());
+                        idesc.instanceOffset = instanceContributionToHitGroupIndex;
+                        idesc.mask = 0xff;
+                        idesc.flags = isMaterialDoubleSided ? VK_GEOMETRY_INSTANCE_TRIANGLE_CULL_DISABLE_BIT_NV : 0;
+                        memcpy(idesc.transform, &transform, sizeof(idesc.transform));
+#else
+                        idesc.InstanceID = uint32_t(instanceDesc.size());
+                        idesc.InstanceContributionToHitGroupIndex = instanceContributionToHitGroupIndex;
+                        idesc.InstanceMask = 0xff;
+                        idesc.Flags = isMaterialDoubleSided ? D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_CULL_DISABLE : D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
+                        memcpy(idesc.Transform, &transform, sizeof(idesc.Transform));
+#endif
+                        instanceDesc.push_back(idesc);
+
+                        instanceContributionToHitGroupIndex += hitProgCount * blasData.meshCount;
+                        mGeometryCount += blasData.meshCount;
+                        if (modelInstance == 0) modelInstanceData.meshInstancesPerModelInstance += blasData.meshCount;
+                        tlasIndex += blasData.meshCount;
+                        assert(tlasIndex * hitProgCount == instanceContributionToHitGroupIndex);
+                    }
+                }
+            }
+        }
+        assert(tlasIndex == mGeometryCount);
+
+        // Validate that our getInstanceId() helper returns contigous indices.
+        uint32_t instanceId = 0;
+        for (uint32_t model = 0; model < getModelCount(); model++)
+        {
+            for (uint32_t modelInstance = 0; modelInstance < getModelInstanceCount(model); modelInstance++)
+            {
+                for (uint32_t mesh = 0; mesh < getModel(model)->getMeshCount(); mesh++)
+                {
+                    for (uint32_t meshInstance = 0; meshInstance < getModel(model)->getMeshInstanceCount(mesh); meshInstance++)
+                    {
+                        assert(getInstanceId(model, modelInstance, mesh, meshInstance) == instanceId++);
+                    }
+                }
+            }
+        }
+        assert(instanceId == mGeometryCount);
+
+        return instanceDesc;
+    }
 }

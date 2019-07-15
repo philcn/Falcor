@@ -85,10 +85,12 @@ namespace Falcor
         void createTlas(uint32_t rayCount);
 
 #ifdef FALCOR_VK
-        std::vector<VkGeometryInstance> createInstanceDesc(const RtScene* pScene, uint32_t hitProgCount);
+        using InstanceDescType = VkGeometryInstance;
 #else
-        std::vector<D3D12_RAYTRACING_INSTANCE_DESC> createInstanceDesc(const RtScene* pScene, uint32_t hitProgCount);
+        using InstanceDescType = D3D12_RAYTRACING_INSTANCE_DESC;
 #endif
+
+        std::vector<InstanceDescType> createInstanceDesc(const RtScene* pScene, uint32_t hitProgCount);
 
         uint32_t mGeometryCount = 0;    // The total number of geometries in the scene
         uint32_t mInstanceCount = 0;    // The total number of TLAS instances in the scene
