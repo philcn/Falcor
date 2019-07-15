@@ -278,7 +278,7 @@ namespace Falcor
 
     void RenderContext::raytrace(RtProgramVars::SharedPtr pVars, RtState::SharedPtr pState, uint32_t width, uint32_t height, uint32_t depth)
     {
-        resourceBarrier(pVars->getShaderTable().get(), Resource::State::Raytracing);
+        resourceBarrier(pVars->getShaderTable().get(), Resource::State::ShaderResource);
 
         Buffer* pShaderTable = pVars->getShaderTable().get();
         uint32_t recordSize = pVars->getRecordSize();

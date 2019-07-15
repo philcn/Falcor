@@ -120,8 +120,6 @@ namespace Falcor
         case Resource::State::ResolveSource:
         case Resource::State::CopySource:
             return VK_ACCESS_TRANSFER_READ_BIT;
-        case Resource::State::Raytracing:
-            return VK_ACCESS_SHADER_READ_BIT; // VKRayTODO: Verify
         default:
             should_not_get_here();
             return VkAccessFlagBits(-1);
@@ -143,7 +141,7 @@ namespace Falcor
         case Resource::State::UnorderedAccess:
         case Resource::State::ConstantBuffer:
         case Resource::State::ShaderResource:
-            return VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT; // #OPTME Assume the worst
+            return VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_NV; // #OPTME Assume the worst
         case Resource::State::RenderTarget:
             return VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
         case Resource::State::DepthStencil:
@@ -157,8 +155,6 @@ namespace Falcor
             return VK_PIPELINE_STAGE_TRANSFER_BIT;
         case Resource::State::Present:
             return src ? (VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT | VK_PIPELINE_STAGE_ALL_COMMANDS_BIT) : VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-        case Resource::State::Raytracing:
-            return VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_NV;
         default:
             should_not_get_here();
             return VK_PIPELINE_STAGE_FLAG_BITS_MAX_ENUM;
