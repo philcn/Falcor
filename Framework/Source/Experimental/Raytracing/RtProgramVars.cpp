@@ -56,7 +56,7 @@ namespace Falcor
     RtProgramVars::SharedPtr RtProgramVars::create(RtProgram::SharedPtr pProgram, RtScene::SharedPtr pScene)
     {
 #ifdef FALCOR_VK
-        pProgram->addDefine("RT_GEOMETRY_COUNT", std::to_string(pScene->getGeometryCount(pProgram->getHitProgramCount()))); // VKRayTODO: Clean this up
+        pProgram->addDefine("RT_GEOMETRY_COUNT", std::to_string(pScene->getGeometryCount(pProgram->getHitProgramCount())));
 #endif
 
         SharedPtr pVars = SharedPtr(new RtProgramVars(pProgram, pScene));

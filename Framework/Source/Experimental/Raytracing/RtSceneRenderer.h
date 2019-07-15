@@ -87,6 +87,7 @@ namespace Falcor
         // Vulkan uses bindless material
         ParameterBlock::SharedPtr mpMaterialBlock;
         StructuredBuffer::SharedPtr mpMaterialConstantsBuffer;
+        uint32_t mGeometryCount = 0;
 #endif
 
         struct MeshBufferLocations

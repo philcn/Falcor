@@ -46,10 +46,11 @@ namespace Falcor
             mMaterialResourceLocations.samplerState = pBlockReflection->getResourceBinding("samplerState");
         }
 
-        if (!mpMaterialBlock)
+        RtScene* pScene = dynamic_cast<RtScene*>(mpScene.get());
+        uint32_t geometryCount = pScene->getGeometryCount(pRtVars->getHitProgramsCount());
+        if (!mpMaterialBlock || mGeometryCount != geometryCount)
         {
-            RtScene* pScene = dynamic_cast<RtScene*>(mpScene.get());
-            uint32_t geometryCount = pScene->getGeometryCount(pRtVars->getHitProgramsCount()); // VKRayTODO: Recreate buffer when geometry count changes
+            mGeometryCount = geometryCount;
 
             auto pProgramReflection = pRtVars->getGlobalVars()->getReflection();
             auto pBlockReflection = pProgramReflection->getParameterBlock("gRtMaterials");
