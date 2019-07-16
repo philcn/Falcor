@@ -29,7 +29,7 @@
 #include "API/Device.h"
 #include "Experimental/Raytracing/RtProgramVars.h"
 #include "Experimental/Raytracing/RtStateObject.h"
-#include "VkRtProgramVarsHelper.h"
+#include "VKRtProgramVarsHelper.h"
 
 namespace Falcor
 {
